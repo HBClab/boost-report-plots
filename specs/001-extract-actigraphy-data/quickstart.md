@@ -1,0 +1,38 @@
+# Quickstart: Extract Actigraphy Data
+
+## Purpose
+
+Validate the first actigraphy import workflow end to end using a local PostgreSQL database and a
+fixture-sized subset of the GGIR derivatives tree before running against the full study data.
+
+## Prerequisites
+
+1. Enter the project development shell.
+2. Ensure the environment includes Python tooling and PostgreSQL client/server tools.
+3. Confirm read access to the approved GGIR derivatives root:
+   `/mnt/lss/Projects/BOOST/InterventionStudy/3-experiment/data/act-int-final-test-2/derivatives/GGIR-3.2.6`
+4. Start or connect to a local PostgreSQL instance for the project dataset.
+
+## Validation Flow
+
+1. Prepare a small fixture subtree containing one or more `part5_daysummary_*.csv` files across
+   at least two subjects and multiple sessions.
+2. Initialize the local schema for `subjects`, `sessions`, and `session_days`.
+3. Run the actigraphy import workflow against the fixture subtree.
+4. Verify the run summary reports all matched files as imported or flagged with an explicit
+   issue.
+5. Query the local dataset and confirm:
+   - subject/session/day uniqueness is preserved
+   - required metrics are present
+   - `nonwear_minutes` was derived from the source percentage
+   - each day row retains its source file lineage
+6. Re-run the same import and confirm stored subject/session/day counts do not increase unless
+   the fixture data changed.
+
+## Suggested Manual Checks
+
+- Compare at least five imported day rows against source CSV values.
+- Confirm one invalid fixture row is rejected with a readable issue message.
+- Confirm one duplicate rerun updates or preserves the canonical local row instead of creating a
+  second copy.
+- Record matched file count, imported row count, and rejected row count for planning sign-off.

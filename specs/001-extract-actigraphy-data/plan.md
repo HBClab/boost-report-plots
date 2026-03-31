@@ -1,109 +1,90 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Extract Actigraphy Data
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
-
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
+**Branch**: `001-extract-actigraphy-data` | **Date**: 2026-03-31 | **Spec**: [/home/zak/work/hbc/boost/extras/report-2/specs/001-extract-actigraphy-data/spec.md](/home/zak/work/hbc/boost/extras/report-2/specs/001-extract-actigraphy-data/spec.md)
+**Input**: Feature specification from `/specs/001-extract-actigraphy-data/spec.md`
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+Build the first actigraphy ingestion workflow for the report pipeline: recursively discover GGIR
+day-summary CSVs in the approved derivatives tree, normalize the required session-day metrics,
+and load them into a local PostgreSQL dataset that supports traceable, repeatable imports for
+future report generation.
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
-
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing/Validation**: [e.g., manual visual verification, fixture comparison, pytest, or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: Python 3.12 for ingestion tooling; SQL for local schema and migrations  
+**Primary Dependencies**: Standard-library CSV/path handling, PostgreSQL driver, lightweight
+database migration support  
+**Storage**: Local PostgreSQL database for subjects, sessions, and session_days  
+**Testing/Validation**: Manual validation with fixture imports, row-count checks, sampled source
+to database comparisons, and rerun idempotency verification; automated tests optional later  
+**Target Platform**: Local Linux/macOS development shell via Nix; read access to mounted shared
+BOOST data directory  
+**Project Type**: Single-project data-ingestion utility supporting the report pipeline  
+**Performance Goals**: Import the full derivatives tree in one run without manual file
+selection; keep reruns practical for iterative analyst workflows  
+**Constraints**: Read-only access to `/mnt/lss/Projects/BOOST/.../GGIR-3.2.6`; no writes to
+shared servers; support duplicate-safe reruns; extend `flake.nix` for Python and PostgreSQL
+tooling as needed  
+**Scale/Scope**: One study-level derivatives tree containing many subjects, multiple sessions per
+subject, and one session-day record per CSV row
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- Plot scope is traced to an approved specification in `docs/plot-specs/` or the plan explains
-  why a new specification must be added first.
-- Implementation uses TypeScript and D3 for shipped plot behavior.
-- Data access is documented as read-only against shared servers and upstream systems.
-- Validation evidence is defined for the feature; do not assume an automated test suite unless
-  the feature explicitly requires one.
+- Plot scope is traced to an approved specification in `docs/plot-specs/act.md` because this
+  ingestion feature prepares the actigraphy dataset used by those report plots; it introduces no
+  new plot behavior.
+- The TypeScript + D3 rule does not apply to this feature's shipped behavior because the scope is
+  data ingestion rather than plot rendering. Future actigraphy plots remain bound to the
+  TypeScript + D3 standard.
+- Data access remains read-only against shared servers: the importer reads GGIR outputs from the
+  mounted derivatives tree and writes only to a local project-managed PostgreSQL database.
+- Validation evidence is defined as fixture imports, sampled source-to-database checks, import
+  issue reporting, and duplicate-safe rerun verification without requiring a standing automated
+  test suite.
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/[###-feature]/
-├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+specs/001-extract-actigraphy-data/
+├── plan.md
+├── research.md
+├── data-model.md
+├── quickstart.md
+├── contracts/
+│   └── actigraphy-import-contract.md
+└── tasks.md
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+flake.nix
 src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+├── act/
+│   ├── __init__.py
+│   ├── importer.py
+│   ├── parser.py
+│   ├── repository.py
+│   └── schema.sql
+└── cli/
+    └── import_actigraphy.py
 
 tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+└── fixtures/
+    └── actigraphy/
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Use a single-project Python ingestion layout under `src/` with a small
+CLI entrypoint, feature-specific actigraphy import modules, and fixture-based validation assets.
+`flake.nix` remains the environment entrypoint and will be extended for Python/PostgreSQL
+development dependencies.
 
 ## Complexity Tracking
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+No constitution violations require justification. The feature adds a local PostgreSQL layer
+because the spec requires traceable, duplicate-safe subject/session/day storage across reruns.
