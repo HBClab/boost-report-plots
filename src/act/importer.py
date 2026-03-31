@@ -10,7 +10,7 @@ from .repository import upsert_session_day
 
 
 DEFAULT_DERIVATIVES_ROOT = Path(
-    "/mnt/lss/Projects/BOOST/InterventionStudy/3-experiment/data/act-int-final-test-2/derivatives/GGIR-3.2.6"
+    "/mnt/lss/Projects/BOOST/ObservationalStudy/3-experiment/data/act-obs-final-test-2/derivatives/GGIR-3.2.6"
 )
 
 
@@ -48,7 +48,7 @@ class ImportSummary:
 def discover_day_summary_files(root: Path) -> list[Path]:
     return sorted(
         path
-        for path in root.rglob("part5_daysummary_*.csv")
+        for path in root.rglob("part5_daysummary_MM_*.csv")
         if _looks_like_ggir_summary_path(path)
     )
 

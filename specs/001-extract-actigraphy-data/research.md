@@ -28,7 +28,8 @@
 ## Decision 3: Discover source files by recursive path matching from the approved derivatives root
 
 - **Decision**: Traverse the approved GGIR derivatives directory recursively and ingest only files
-  matching the expected `sub-*/accel/ses-*/output_ses-*/results/part5_daysummary_*.csv` pattern.
+  matching the expected `sub-*/accel/ses-*/output_ses-*/results/part5_daysummary_MM_*.csv`
+  pattern.
 - **Rationale**: The source tree is nested by subject and session, and the feature requirement is
   to find files by tree search rather than maintain a hand-authored manifest.
 - **Alternatives considered**:

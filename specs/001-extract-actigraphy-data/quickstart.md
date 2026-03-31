@@ -20,6 +20,7 @@ fixture-sized subset of the GGIR derivatives tree before running against the ful
 
 1. Prepare a small fixture subtree containing one or more `part5_daysummary_*.csv` files across
    at least two subjects and multiple sessions.
+   The importer currently targets only `part5_daysummary_MM_*.csv` files.
 2. Initialize the local schema for `subjects`, `sessions`, and `session_days`.
    Example: `python3 -m src.cli.import_actigraphy init-db --db-url postgresql:///boost_actigraphy`
 3. Run the actigraphy import workflow against the fixture subtree.

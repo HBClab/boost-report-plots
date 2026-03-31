@@ -18,7 +18,7 @@ planning and implementation share the same input, output, and idempotency rules.
 ## Source Discovery Contract
 
 - The workflow recursively searches from the provided root path.
-- Only files matching the approved GGIR day-summary pattern are eligible for import.
+- Only files matching the approved GGIR `MM` day-summary pattern are eligible for import.
 - For every matched file, the workflow derives:
   - `subject_code` from the `sub-*` path component
   - `session_number` from the `ses-*` path component

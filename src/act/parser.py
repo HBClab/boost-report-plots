@@ -67,7 +67,12 @@ def parse_day_summary_file(
                     session_number=session_number,
                 )
                 if record.day_date in seen_dates:
-                    raise ParseError(f"duplicate calendar_date within file: {record.day_date.isoformat()}")
+                    issues.append(
+                        "row "
+                        f"{row_number}: duplicate calendar_date within file: "
+                        f"{record.day_date.isoformat()} (kept first row)"
+                    )
+                    continue
                 seen_dates.add(record.day_date)
                 records.append(record)
             except ParseError as exc:

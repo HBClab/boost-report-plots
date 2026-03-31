@@ -12,3 +12,17 @@ The importer defaults to the hardcoded derivatives root in
 `src/act/importer.py`. If you want to load another study tree with the same
 path structure after `derivatives/`, update `DEFAULT_DERIVATIVES_ROOT` or pass
 `--root /path/to/other/derivatives/...` at runtime.
+
+## Local PostgreSQL Helpers
+
+Start a repo-local PostgreSQL instance:
+
+```bash
+nix develop -c bash scripts/start-local-db.sh
+```
+
+Stop it:
+
+```bash
+nix develop -c bash scripts/stop-local-db.sh
+```
