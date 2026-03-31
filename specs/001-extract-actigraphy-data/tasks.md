@@ -30,9 +30,9 @@ independently.
 
 **Purpose**: Prepare the development environment and repository structure for the importer
 
-- [ ] T001 Update Python and PostgreSQL development dependencies in `flake.nix`
-- [ ] T002 Create the actigraphy package skeleton in `src/act/__init__.py`, `src/act/importer.py`, `src/act/parser.py`, `src/act/repository.py`, `src/act/schema.sql`, and `src/cli/import_actigraphy.py`
-- [ ] T003 [P] Create fixture and validation directories in `tests/fixtures/actigraphy/.gitkeep` and `tests/fixtures/actigraphy/README.md`
+- [X] T001 Update Python and PostgreSQL development dependencies in `flake.nix`
+- [X] T002 Create the actigraphy package skeleton in `src/act/__init__.py`, `src/act/importer.py`, `src/act/parser.py`, `src/act/repository.py`, `src/act/schema.sql`, and `src/cli/import_actigraphy.py`
+- [X] T003 [P] Create fixture and validation directories in `tests/fixtures/actigraphy/.gitkeep` and `tests/fixtures/actigraphy/README.md`
 
 ---
 
@@ -42,12 +42,12 @@ independently.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Implement the PostgreSQL schema for `subjects`, `sessions`, and `session_days` in `src/act/schema.sql`
-- [ ] T005 [P] Implement database connection and persistence helpers for subjects and sessions in `src/act/repository.py`
-- [ ] T006 [P] Implement CSV row normalization utilities for required actigraphy metrics in `src/act/parser.py`
-- [ ] T007 Implement shared import orchestration and run-summary structures in `src/act/importer.py`
-- [ ] T008 Implement the CLI entrypoint and configuration handling in `src/cli/import_actigraphy.py`
-- [ ] T009 Align validation instructions with the scaffolded workflow in `specs/001-extract-actigraphy-data/quickstart.md`
+- [X] T004 Implement the PostgreSQL schema for `subjects`, `sessions`, and `session_days` in `src/act/schema.sql`
+- [X] T005 [P] Implement database connection and persistence helpers for subjects and sessions in `src/act/repository.py`
+- [X] T006 [P] Implement CSV row normalization utilities for required actigraphy metrics in `src/act/parser.py`
+- [X] T007 Implement shared import orchestration and run-summary structures in `src/act/importer.py`
+- [X] T008 Implement the CLI entrypoint and configuration handling in `src/cli/import_actigraphy.py`
+- [X] T009 Align validation instructions with the scaffolded workflow in `specs/001-extract-actigraphy-data/quickstart.md`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -63,16 +63,16 @@ are discovered and loaded as subject/session/day rows with the required metrics
 
 ### Validation for User Story 1 (REQUIRED) ⚠️
 
-- [ ] T010 [P] [US1] Add fixture import instructions and expected row outcomes to `specs/001-extract-actigraphy-data/quickstart.md`
-- [ ] T011 [P] [US1] Add representative GGIR fixture files and expected-results notes in `tests/fixtures/actigraphy/README.md`
+- [X] T010 [P] [US1] Add fixture import instructions and expected row outcomes to `specs/001-extract-actigraphy-data/quickstart.md`
+- [X] T011 [P] [US1] Add representative GGIR fixture files and expected-results notes in `tests/fixtures/actigraphy/README.md`
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Implement recursive GGIR file discovery and path matching in `src/act/importer.py`
-- [ ] T013 [US1] Implement extraction of required CSV columns and nonwear-minute conversion in `src/act/parser.py`
-- [ ] T014 [US1] Implement subject/session/session-day inserts for newly discovered data in `src/act/repository.py`
-- [ ] T015 [US1] Wire the end-to-end import command for fixture and full-tree runs in `src/cli/import_actigraphy.py`
-- [ ] T016 [US1] Document the MVP import execution flow and acceptance checks in `specs/001-extract-actigraphy-data/quickstart.md`
+- [X] T012 [US1] Implement recursive GGIR file discovery and path matching in `src/act/importer.py`
+- [X] T013 [US1] Implement extraction of required CSV columns and nonwear-minute conversion in `src/act/parser.py`
+- [X] T014 [US1] Implement subject/session/session-day inserts for newly discovered data in `src/act/repository.py`
+- [X] T015 [US1] Wire the end-to-end import command for fixture and full-tree runs in `src/cli/import_actigraphy.py`
+- [X] T016 [US1] Document the MVP import execution flow and acceptance checks in `specs/001-extract-actigraphy-data/quickstart.md`
 
 **Checkpoint**: User Story 1 should import matching GGIR files into the local dataset and be
 independently validated
@@ -88,15 +88,15 @@ subject, session, and matched file without reopening the full tree manually
 
 ### Validation for User Story 2 (REQUIRED) ⚠️
 
-- [ ] T017 [P] [US2] Add lineage verification steps and sample audit queries to `specs/001-extract-actigraphy-data/quickstart.md`
-- [ ] T018 [P] [US2] Add lineage-focused fixture expectations in `tests/fixtures/actigraphy/README.md`
+- [X] T017 [P] [US2] Add lineage verification steps and sample audit queries to `specs/001-extract-actigraphy-data/quickstart.md`
+- [X] T018 [P] [US2] Add lineage-focused fixture expectations in `tests/fixtures/actigraphy/README.md`
 
 ### Implementation for User Story 2
 
-- [ ] T019 [US2] Implement path-derived subject and session metadata parsing in `src/act/importer.py`
-- [ ] T020 [US2] Persist source-file lineage and session-date metadata in `src/act/repository.py`
-- [ ] T021 [US2] Extend run summaries and issue reporting with file-level and row-level trace details in `src/act/importer.py`
-- [ ] T022 [US2] Expose traceable import output from the CLI in `src/cli/import_actigraphy.py`
+- [X] T019 [US2] Implement path-derived subject and session metadata parsing in `src/act/importer.py`
+- [X] T020 [US2] Persist source-file lineage and session-date metadata in `src/act/repository.py`
+- [X] T021 [US2] Extend run summaries and issue reporting with file-level and row-level trace details in `src/act/importer.py`
+- [X] T022 [US2] Expose traceable import output from the CLI in `src/cli/import_actigraphy.py`
 
 **Checkpoint**: Imported rows should retain enough lineage to audit any stored day entry back to
 its source file and session context
@@ -113,15 +113,15 @@ counts stay stable while canonical records refresh correctly
 
 ### Validation for User Story 3 (REQUIRED) ⚠️
 
-- [ ] T023 [P] [US3] Add rerun and idempotency validation steps to `specs/001-extract-actigraphy-data/quickstart.md`
-- [ ] T024 [P] [US3] Add duplicate-input and rerun expectations to `tests/fixtures/actigraphy/README.md`
+- [X] T023 [P] [US3] Add rerun and idempotency validation steps to `specs/001-extract-actigraphy-data/quickstart.md`
+- [X] T024 [P] [US3] Add duplicate-input and rerun expectations to `tests/fixtures/actigraphy/README.md`
 
 ### Implementation for User Story 3
 
-- [ ] T025 [US3] Enforce natural uniqueness and conflict-handling rules for session-day refreshes in `src/act/schema.sql`
-- [ ] T026 [US3] Implement upsert-style refresh behavior for repeated imports in `src/act/repository.py`
-- [ ] T027 [US3] Implement duplicate detection and rerun-safe orchestration in `src/act/importer.py`
-- [ ] T028 [US3] Report rerun outcomes and unchanged-versus-refreshed counts in `src/cli/import_actigraphy.py`
+- [X] T025 [US3] Enforce natural uniqueness and conflict-handling rules for session-day refreshes in `src/act/schema.sql`
+- [X] T026 [US3] Implement upsert-style refresh behavior for repeated imports in `src/act/repository.py`
+- [X] T027 [US3] Implement duplicate detection and rerun-safe orchestration in `src/act/importer.py`
+- [X] T028 [US3] Report rerun outcomes and unchanged-versus-refreshed counts in `src/cli/import_actigraphy.py`
 
 **Checkpoint**: Repeated imports should preserve one canonical subject/session/day record set and
 be independently validated
@@ -132,9 +132,9 @@ be independently validated
 
 **Purpose**: Finish implementation quality, documentation, and manual validation across stories
 
-- [ ] T029 [P] Document final import usage, prerequisites, and schema initialization steps in `README.md`
-- [ ] T030 Review code paths for read-only upstream access guarantees and error clarity in `src/act/importer.py`, `src/act/repository.py`, and `src/cli/import_actigraphy.py`
-- [ ] T031 Run the end-to-end quickstart validation and record outcomes in `specs/001-extract-actigraphy-data/quickstart.md`
+- [X] T029 [P] Document final import usage, prerequisites, and schema initialization steps in `README.md`
+- [X] T030 Review code paths for read-only upstream access guarantees and error clarity in `src/act/importer.py`, `src/act/repository.py`, and `src/cli/import_actigraphy.py`
+- [X] T031 Run the end-to-end quickstart validation and record outcomes in `specs/001-extract-actigraphy-data/quickstart.md`
 
 ---
 
