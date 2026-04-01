@@ -1,5 +1,5 @@
 {
-  description = "A Nix-flake-based Node.js development environment";
+  description = "A Nix-flake-based development environment for report ingestion and plotting";
 
   inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1.*.tar.gz";
 
@@ -22,6 +22,9 @@
             node2nix 
             nodejs 
             nodePackages.pnpm 
+            postgresql
+            python312
+            python312Packages.psycopg
             yarn 
             uv
           ];
