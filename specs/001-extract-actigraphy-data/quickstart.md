@@ -18,9 +18,12 @@ fixture-sized subset of the GGIR derivatives tree before running against the ful
 
 ## Validation Flow
 
-1. Prepare a small fixture subtree containing one or more `part5_daysummary_*.csv` files across
-   at least two subjects and multiple sessions.
-   The importer currently targets only `part5_daysummary_MM_*.csv` files.
+1. Prepare a small fixture subtree containing one or more `part5_daysummary_MM_*.csv` files
+   across at least two subjects and multiple sessions.
+   Each CSV must include the current required columns:
+   `weekday`, `calendar_date`, `nonwear_perc_day`, `dur_spt_min`,
+   `dur_day_total_IN_min`, `dur_day_total_LIG_min`, `dur_day_total_MOD_min`,
+   and `dur_day_total_VIG_min`.
 2. Initialize the local schema for `subjects`, `sessions`, and `session_days`.
    Example: `python3 -m src.cli.import_actigraphy init-db --db-url postgresql:///boost_actigraphy`
 3. Run the actigraphy import workflow against the fixture subtree.
@@ -32,6 +35,8 @@ fixture-sized subset of the GGIR derivatives tree before running against the ful
    - subject/session/day uniqueness is preserved
    - required metrics are present
    - `nonwear_minutes` was derived from the source percentage
+   - the persisted `session_days` schema matches the current canonical fields and no longer
+     includes the removed wake-vigorous metric
    - each day row retains its source file lineage
 6. Re-run the same import and confirm stored subject/session/day counts do not increase unless
    the fixture data changed.
@@ -73,5 +78,5 @@ fixture-sized subset of the GGIR derivatives tree before running against the ful
   - sessions: 2
   - session_days: 3
 - Observed rejected row:
-  - `tests/fixtures/actigraphy/sub-3003/accel/ses-1/output_ses-1/results/part5_daysummary_invalid.csv`
+  - `tests/fixtures/actigraphy/sub-3003/accel/ses-1/output_ses-1/results/part5_daysummary_MM_invalid.csv`
     was rejected because `calendar_date` was blank
