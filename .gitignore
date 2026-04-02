@@ -17,3 +17,9 @@ Thumbs.db
 .idea/
 
 .local/
+
+# Node.js / TypeScript
+node_modules/
+plots/act/public/bundle.js
+plots/act/public/bundle.js.map
+*.log
