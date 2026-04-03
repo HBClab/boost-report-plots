@@ -24,6 +24,7 @@
             nodePackages.pnpm 
             postgresql
             python312
+            python312Packages.pytest
             python312Packages.psycopg
             yarn 
             uv

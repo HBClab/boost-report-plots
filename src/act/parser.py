@@ -11,12 +11,11 @@ REQUIRED_COLUMNS = (
     "weekday",
     "calendar_date",
     "nonwear_perc_day",
-    "dur_spt_sleep_min",
-    "dur_spt_wake_VIG_min",
-    "dur_day_IN_unbt_min",
-    "dur_day_LIG_unbt_min",
-    "dur_day_MOD_unbt_min",
-    "dur_day_VIG_unbt_min",
+    "dur_spt_min",
+    "dur_day_total_IN_min",
+    "dur_day_total_LIG_min",
+    "dur_day_total_MOD_min",
+    "dur_day_total_VIG_min",
 )
 
 
@@ -28,7 +27,6 @@ class SessionDayRecord:
     weekday: str
     nonwear_minutes: int
     sleep_minutes: float
-    wake_vigorous_minutes: float
     sedentary_minutes: float
     light_pa_minutes: float
     moderate_pa_minutes: float
@@ -92,15 +90,11 @@ def _parse_row(
     day_date = _parse_date(row.get("calendar_date"), field_name="calendar_date")
     weekday = _require_text(row.get("weekday"), field_name="weekday")
     nonwear_percentage = _parse_percentage(row.get("nonwear_perc_day"), field_name="nonwear_perc_day")
-    sleep_minutes = _parse_float(row.get("dur_spt_sleep_min"), field_name="dur_spt_sleep_min")
-    wake_vigorous_minutes = _parse_float(
-        row.get("dur_spt_wake_VIG_min"),
-        field_name="dur_spt_wake_VIG_min",
-    )
-    sedentary_minutes = _parse_float(row.get("dur_day_IN_unbt_min"), field_name="dur_day_IN_unbt_min")
-    light_pa_minutes = _parse_float(row.get("dur_day_LIG_unbt_min"), field_name="dur_day_LIG_unbt_min")
-    moderate_pa_minutes = _parse_float(row.get("dur_day_MOD_unbt_min"), field_name="dur_day_MOD_unbt_min")
-    vigorous_pa_minutes = _parse_float(row.get("dur_day_VIG_unbt_min"), field_name="dur_day_VIG_unbt_min")
+    sleep_minutes = _parse_float(row.get("dur_spt_min"), field_name="dur_spt_min")
+    sedentary_minutes = _parse_float(row.get("dur_day_total_IN_min"), field_name="dur_day_total_IN_min")
+    light_pa_minutes = _parse_float(row.get("dur_day_total_LIG_min"), field_name="dur_day_total_LIG_min")
+    moderate_pa_minutes = _parse_float(row.get("dur_day_total_MOD_min"), field_name="dur_day_total_MOD_min")
+    vigorous_pa_minutes = _parse_float(row.get("dur_day_total_VIG_min"), field_name="dur_day_total_VIG_min")
 
     return SessionDayRecord(
         subject_code=subject_code,
@@ -109,7 +103,6 @@ def _parse_row(
         weekday=weekday,
         nonwear_minutes=int(round((nonwear_percentage / 100.0) * FULL_DAY_MINUTES)),
         sleep_minutes=sleep_minutes,
-        wake_vigorous_minutes=wake_vigorous_minutes,
         sedentary_minutes=sedentary_minutes,
         light_pa_minutes=light_pa_minutes,
         moderate_pa_minutes=moderate_pa_minutes,

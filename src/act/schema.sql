@@ -20,7 +20,6 @@ CREATE TABLE IF NOT EXISTS session_days (
     weekday TEXT NOT NULL,
     nonwear_minutes INTEGER NOT NULL CHECK (nonwear_minutes >= 0 AND nonwear_minutes <= 1440),
     sleep_minutes DOUBLE PRECISION NOT NULL,
-    wake_vigorous_minutes DOUBLE PRECISION NOT NULL,
     sedentary_minutes DOUBLE PRECISION NOT NULL,
     light_pa_minutes DOUBLE PRECISION NOT NULL,
     moderate_pa_minutes DOUBLE PRECISION NOT NULL,

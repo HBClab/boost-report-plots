@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accelerometer Activity Plots — BOOST Study</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #F7F7F9;
+      font-family: Inter, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px 48px;
+      gap: 24px;
+      min-height: 100vh;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 1440px;
+      max-width: 100%;
+    }
+
+    .toolbar h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #212130;
+    }
+
+    #save-btn {
+      background: #247F8F;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    #save-btn:hover { background: #1d6a78; }
+
+    #canvas-wrapper {
+      overflow-x: auto;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    #canvas {
+      display: block;
+      background: #F7F7F9;
+    }
+
+    #loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 14px;
+      color: #737380;
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <h1>BOOST Study — Accelerometer Activity</h1>
+    <button id="save-btn">Save SVG</button>
+  </div>
+  <div id="canvas-wrapper">
+    <svg id="canvas" width="1440" height="1024" xmlns="http://www.w3.org/2000/svg">
+      <text id="loading" x="720" y="512" text-anchor="middle" font-size="14" fill="#737380">Loading data…</text>
+    </svg>
+  </div>
+  <script type="module" src="bundle.js"></script>
+</body>
+</html>

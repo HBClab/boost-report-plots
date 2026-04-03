@@ -48,6 +48,15 @@
   - `mvpa_minutes`: Imported MVPA duration
   - `source_file`: Matched GGIR CSV path used for the row
   - `created_at`: Record creation timestamp
+- **Required source columns**:
+  - `weekday`
+  - `calendar_date`
+  - `nonwear_perc_day`
+  - `dur_spt_min`
+  - `dur_day_total_IN_min`
+  - `dur_day_total_LIG_min`
+  - `dur_day_total_MOD_min`
+  - `dur_day_total_VIG_min`
 - **Validation rules**:
   - `session_id` must reference an existing session
   - `day_date` must be present and valid

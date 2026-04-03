@@ -42,6 +42,17 @@ session-day record containing:
 - `mvpa_minutes`
 - `source_file`
 
+The current parser requires these GGIR source columns in each matched CSV row:
+
+- `weekday`
+- `calendar_date`
+- `nonwear_perc_day`
+- `dur_spt_min`
+- `dur_day_total_IN_min`
+- `dur_day_total_LIG_min`
+- `dur_day_total_MOD_min`
+- `dur_day_total_VIG_min`
+
 ## Validation Contract
 
 - Rows missing required columns, valid dates, usable subject/session metadata, or numeric metric
@@ -60,6 +71,9 @@ session-day record containing:
 ## Storage Contract
 
 - The workflow writes only to the local project-managed PostgreSQL database.
+- The canonical `session_days` record stores the imported sleep, sedentary, light, moderate,
+  vigorous, and derived MVPA metrics; it does not persist the older wake-vigorous field that was
+  removed from the required CSV inputs.
 - The workflow never writes to the shared GGIR derivatives tree or other shared upstream
   locations.
 

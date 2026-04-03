@@ -6,6 +6,7 @@ The repository now includes a local actigraphy importer for GGIR day-summary CSV
 
 - Enter the development shell with `nix develop`
 - Initialize the local database with `python3 -m src.cli.import_actigraphy init-db`
+- Rebuild the actigraphy schema after incompatible changes with `psql -f db/migrations/reset-actigraphy-db.sql "$ACTIGRAPHY_DB_URL"`
 - Import data with `python3 -m src.cli.import_actigraphy import`
 
 The importer defaults to the hardcoded derivatives root in
