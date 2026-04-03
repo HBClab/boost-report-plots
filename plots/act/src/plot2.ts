@@ -33,6 +33,11 @@ const DELTA_COL_W = 14;  // px delta separator column
 const SESSION_LABEL_H = 20; // px above cells for S1-S4 labels
 const MAX_SESSIONS = 4;
 const MAX_DELTA_MARKER_H = 12; // px max triangle height
+const TITLE_H = 28;
+const LEGEND_TOP_GAP = 16;
+const LEGEND_H = 10;
+const LEGEND_LABEL_GAP = 4;
+const CARD_BOTTOM_PAD = 20;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -44,6 +49,17 @@ function computeDelta(subject: SubjectSessionData): number {
 
 function getSession(subject: SubjectSessionData, n: number) {
   return subject.sessions.find((s) => s.session_number === n) ?? null;
+}
+
+export function getPlot2Height(subjectCount: number): number {
+  return CARD_PAD
+    + TITLE_H
+    + SESSION_LABEL_H
+    + subjectCount * ROW_STRIDE
+    + LEGEND_TOP_GAP
+    + LEGEND_H
+    + LEGEND_LABEL_GAP
+    + CARD_BOTTOM_PAD;
 }
 
 // ─── Main render function ────────────────────────────────────────────────────
@@ -75,8 +91,7 @@ export function renderPlot2(
     .attr('font-family', 'Inter, -apple-system, sans-serif')
     .text('Intervention — Sedentary & MVPA by Participant × Session');
 
-  const titleH = 28;
-  const chartTop = CARD_PAD + titleH;
+  const chartTop = CARD_PAD + TITLE_H;
 
   // Layout within card (using spec positions relative to card origin)
   // Left panel starts at card-relative x = 24 (pad)
@@ -215,9 +230,9 @@ export function renderPlot2(
   });
 
   // Color scale legends below heatmap
-  const legendTop = cellsTop + data.length * ROW_STRIDE + 16;
+  const legendTop = cellsTop + data.length * ROW_STRIDE + LEGEND_TOP_GAP;
   const gradW = MAX_SESSIONS * CELL_W;
-  const gradH = 10;
+  const gradH = LEGEND_H;
 
   renderGradientLegend(g, leftPanelX, legendTop, gradW, gradH, COLORS.missing, COLORS.sedentary, 'Sedentary');
   renderGradientLegend(g, rightPanelX, legendTop, gradW, gradH, COLORS.missing, COLORS.intervention, 'MVPA');

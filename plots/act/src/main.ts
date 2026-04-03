@@ -1,11 +1,13 @@
 import * as d3 from 'd3';
 import { renderPlot1 } from './plot1.js';
-import { renderPlot2 } from './plot2.js';
+import { getPlot2Height, renderPlot2 } from './plot2.js';
 import { initSaveButton } from './save.js';
 import { COLORS } from './constants.js';
 import type { Plot1ApiResponse, Plot2ApiResponse } from './types.js';
 
 // ─── Canvas layout (1440×1024px, from docs/plot-specs/act.md v2.1) ──────────
+const CANVAS_W = 1440;
+const CANVAS_MIN_H = 1024;
 const LAYOUTS = {
   plot1Intervention: { x: 60, y: 40,  w: 1320, h: 296 },
   plot1Observational: { x: 60, y: 375, w: 640,  h: 296 },
@@ -20,9 +22,9 @@ async function main(): Promise<void> {
   }
 
   // Canvas background
-  svg.append('rect')
+  const background = svg.append('rect')
     .attr('x', 0).attr('y', 0)
-    .attr('width', 1440).attr('height', 1024)
+    .attr('width', CANVAS_W).attr('height', CANVAS_MIN_H)
     .attr('fill', COLORS.background);
 
   // Remove loading placeholder
@@ -50,6 +52,14 @@ async function main(): Promise<void> {
     return;
   }
 
+  const plot2Height = Math.max(LAYOUTS.plot2.h, getPlot2Height(plot2Resp.subjects.length));
+  const canvasHeight = Math.max(CANVAS_MIN_H, LAYOUTS.plot2.y + plot2Height + 40);
+  svg
+    .attr('width', CANVAS_W)
+    .attr('height', canvasHeight)
+    .attr('viewBox', `0 0 ${CANVAS_W} ${canvasHeight}`);
+  background.attr('height', canvasHeight);
+
   // Render Plot 1 — Intervention (top card)
   renderPlot1(svg, intResp.rows, 'Intervention', LAYOUTS.plot1Intervention);
 
@@ -57,7 +67,7 @@ async function main(): Promise<void> {
   renderPlot1(svg, obsResp.rows, 'Observational', LAYOUTS.plot1Observational);
 
   // Render Plot 2 — Intervention heatmap (lower-right card)
-  renderPlot2(svg, plot2Resp.subjects, LAYOUTS.plot2);
+  renderPlot2(svg, plot2Resp.subjects, { ...LAYOUTS.plot2, h: plot2Height });
 
   // Initialize Save SVG button
   const svgEl = document.getElementById('canvas') as SVGSVGElement | null;
