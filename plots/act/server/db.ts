@@ -136,8 +136,8 @@ export async function plot3Query(): Promise<SessionHourlyEnmo[]> {
     group: r.group as 'intervention' | 'observational',
     session_number: parseInt(r.session_number, 10),
     hour: parseInt(r.hour, 10),
-    enmo_mean: parseFloat(r.enmo_mean),
-    enmo_sd: r.enmo_sd !== null ? parseFloat(r.enmo_sd) : null,
+    enmo_mean: parseFloat(r.enmo_mean) * 1000,
+    enmo_sd: r.enmo_sd !== null ? parseFloat(r.enmo_sd) * 1000 : null,
     n_participants: parseInt(r.n_participants, 10),
   }));
 }

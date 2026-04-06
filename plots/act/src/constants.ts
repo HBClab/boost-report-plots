@@ -1,17 +1,17 @@
-// Color palette from docs/plot-specs/act.md (v2.1)
+// Color palette — dark scientific theme
 export const COLORS = {
-  sleep: '#4A5568',
-  sedentary: '#6B7890',
-  light: '#8CC299',
-  moderate: '#FCBA42',
-  vigorous: '#DE4545',
-  intervention: '#247F8F',
-  observational: '#DE7833',
-  missing: '#E0E0E8',
-  background: '#F7F7F9',
-  card: '#FFFFFF',
-  textPrimary: '#212130',
-  textSecondary: '#737380',
+  sleep: '#4E5C7A',
+  sedentary: '#7A93B8',
+  light: '#3FA873',
+  moderate: '#F5A623',
+  vigorous: '#EF4444',
+  intervention: '#22C4D4',
+  observational: '#FB923C',
+  missing: '#1E2A3F',
+  background: '#0D1117',
+  card: '#131C2E',
+  textPrimary: '#DDE4EF',
+  textSecondary: '#6B7A90',
 } as const;
 
 // Segment order for Plot 1 (left → right: dark/cool to warm)

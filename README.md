@@ -27,3 +27,18 @@ Stop it:
 ```bash
 nix develop -c bash scripts/stop-local-db.sh
 ```
+
+Create a compressed local backup for transfer to another computer:
+
+```bash
+nix develop -c bash scripts/backup-local-db.sh
+```
+
+Restore a transferred backup into the local Postgres instance:
+
+```bash
+nix develop -c bash scripts/restore-local-db.sh /path/to/backup.dump
+```
+
+The transfer workflow is documented in
+[`docs/db-transfer-plan.md`](/home/zak/work/hbc/boost/extras/report-2/docs/db-transfer-plan.md).

@@ -3,7 +3,6 @@ import { COLORS } from './constants.js';
 import type { SessionHourlyEnmo, CardLayout } from './types.js';
 
 // ─── Session palette (docs/plot-specs/act.md v3.0) ──────────────────────────
-// Sequential teal — S1 is the existing intervention teal, lighter per session
 const SESSION_COLORS: Record<number, string> = {
   1: '#247F8F',
   2: '#3BA8BD',
@@ -27,21 +26,20 @@ const HOUR_LABELS: Record<number, string> = {
 
 // Legend layout
 const LEGEND_TOP_GAP = 20;
-const LEGEND_ITEM_H = 18;
+const LEGEND_ITEM_H = 20;
 const LEGEND_SWATCH_W = 20;
 const LEGEND_SWATCH_H = 8;
+const LEGEND_HIT_W = 250;
 
 // ─── Coordinate helpers ───────────────────────────────────────────────────────
 
 function enmoToRadius(enmo: number): number {
-  // Linear scale: 0mg → CLOCK_INNER_R, ENMO_MAX mg → CLOCK_OUTER_R
   const t = Math.max(0, enmo) / ENMO_MAX;
   return CLOCK_INNER_R + t * (CLOCK_OUTER_R - CLOCK_INNER_R);
 }
 
 /** Hour 0 is at 12-o-clock (top); clockwise. */
 function hourAngle(hour: number, fraction: number = 0.5): number {
-  // fraction = 0.5 → midpoint of the hour (e.g., 00:30 for hour 0)
   return ((hour + fraction) / 24) * 2 * Math.PI - Math.PI / 2;
 }
 
@@ -56,6 +54,13 @@ export function renderPlot3(
   rows: SessionHourlyEnmo[],
   layout: CardLayout,
 ): void {
+  // Restrict to observational session 1 and intervention sessions 1–4 only
+  rows = rows.filter((r) => {
+    if (r.group === 'observational') return r.session_number === 1;
+    if (r.group === 'intervention') return r.session_number >= 1 && r.session_number <= 4;
+    return false;
+  });
+
   const { x, y, w, h } = layout;
 
   // Card background
@@ -68,31 +73,30 @@ export function renderPlot3(
   // Title
   card.append('text')
     .attr('x', CARD_PAD).attr('y', CARD_PAD + 14)
-    .attr('font-family', 'Inter, -apple-system, sans-serif')
+    .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
     .attr('font-size', 14).attr('font-weight', 600)
     .attr('fill', COLORS.textPrimary)
     .text('Radial Activity Clock (ENMO by Hour)');
 
   // Clock center relative to card origin
-  // Center the clock horizontally; leave room for legend at bottom
   const legendRows = _countLegendRows(rows);
   const legendH = legendRows * LEGEND_ITEM_H + LEGEND_TOP_GAP + 24;
   const availableH = h - CARD_PAD - TITLE_H - legendH;
   const cy = CARD_PAD + TITLE_H + availableH / 2;
   const cx = w / 2;
 
+  // clockG is the group that all session paths live in — passed to legend for hover targeting
   const clockG = card.append('g').attr('transform', `translate(${cx},${cy})`);
 
   _renderRings(clockG);
   _renderHourTicks(clockG);
   _renderLines(clockG, rows);
-  _renderLegend(card, rows, cx, cy, legendH, h);
+  _renderLegend(card, clockG, rows, legendH, h);
 }
 
 // ─── Rings & ticks ───────────────────────────────────────────────────────────
 
-function _renderRings(g: d3.Selection<SVGGElement, unknown, SVGSVGElement, unknown>): void {
-  // Concentric reference rings
+function _renderRings(g: d3.Selection<SVGGElement, unknown, SVGGElement, unknown>): void {
   for (const mg of RING_LABELS) {
     const r = enmoToRadius(mg);
     g.append('circle')
@@ -100,16 +104,14 @@ function _renderRings(g: d3.Selection<SVGGElement, unknown, SVGSVGElement, unkno
       .attr('fill', 'none')
       .attr('stroke', COLORS.missing)
       .attr('stroke-width', 1);
-    // Label at 12-o-clock (top, slight offset)
     g.append('text')
       .attr('x', 4).attr('y', -r + 4)
-      .attr('font-family', 'Inter, -apple-system, sans-serif')
+      .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
       .attr('font-size', 9).attr('font-weight', 400)
       .attr('fill', COLORS.textSecondary)
       .text(`${mg}mg`);
   }
 
-  // MVPA threshold dashed ring
   const mvpaR = enmoToRadius(MVPA_MG);
   g.append('circle')
     .attr('r', mvpaR).attr('cx', 0).attr('cy', 0)
@@ -119,18 +121,18 @@ function _renderRings(g: d3.Selection<SVGGElement, unknown, SVGSVGElement, unkno
     .attr('stroke-dasharray', '4 3');
   g.append('text')
     .attr('x', 4).attr('y', -mvpaR + 4)
-    .attr('font-family', 'Inter, -apple-system, sans-serif')
+    .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
     .attr('font-size', 9).attr('font-weight', 400)
     .attr('fill', COLORS.textSecondary)
     .text('MVPA (100mg)');
 
-  // White center circle (dead zone)
+  // Center dead-zone (filled with card color)
   g.append('circle')
     .attr('r', CLOCK_INNER_R).attr('cx', 0).attr('cy', 0)
     .attr('fill', COLORS.card);
 }
 
-function _renderHourTicks(g: d3.Selection<SVGGElement, unknown, SVGSVGElement, unknown>): void {
+function _renderHourTicks(g: d3.Selection<SVGGElement, unknown, SVGGElement, unknown>): void {
   for (let hour = 0; hour < 24; hour++) {
     const angle = hourAngle(hour, 0);
     const innerR = CLOCK_OUTER_R + 4;
@@ -148,7 +150,7 @@ function _renderHourTicks(g: d3.Selection<SVGGElement, unknown, SVGSVGElement, u
       const [lx, ly] = polar(0, 0, labelR, angle);
       g.append('text')
         .attr('x', lx).attr('y', ly)
-        .attr('font-family', 'Inter, -apple-system, sans-serif')
+        .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
         .attr('font-size', 11).attr('font-weight', 400)
         .attr('fill', COLORS.textSecondary)
         .attr('text-anchor', 'middle')
@@ -161,10 +163,9 @@ function _renderHourTicks(g: d3.Selection<SVGGElement, unknown, SVGSVGElement, u
 // ─── Lines & SD shading ───────────────────────────────────────────────────────
 
 function _renderLines(
-  g: d3.Selection<SVGGElement, unknown, SVGSVGElement, unknown>,
+  g: d3.Selection<SVGGElement, unknown, SVGGElement, unknown>,
   rows: SessionHourlyEnmo[],
 ): void {
-  // Split by group and session
   const byGroupSession = new Map<string, SessionHourlyEnmo[]>();
   for (const row of rows) {
     const key = `${row.group}__${row.session_number}`;
@@ -173,7 +174,7 @@ function _renderLines(
     else byGroupSession.set(key, [row]);
   }
 
-  // Sort keys: observational first (drawn under), then intervention sessions
+  // Sort: observational first (drawn under), then intervention sessions
   const keys = [...byGroupSession.keys()].sort((a, b) => {
     const [ga] = a.split('__');
     const [gb] = b.split('__');
@@ -191,19 +192,23 @@ function _renderLines(
     const color = isObs ? COLORS.observational : (SESSION_COLORS[sessionNum] ?? SESSION_COLORS[1]);
     const strokeWidth = isObs ? 1.5 : 2.5;
 
-    // SD shading polygon (drawn before line so line is on top)
+    // Each session lives in its own group — targeted by legend hover
+    const sessionG = g.append('g')
+      .attr('class', 'session-group')
+      .attr('data-session-key', key);
+
+    // SD band drawn first so line sits on top
     const sdRows = series.filter((r) => r.enmo_sd !== null);
     if (sdRows.length >= 2) {
-      _renderSdBand(g, sdRows, color);
+      _renderSdBand(sessionG, sdRows, color);
     }
 
-    // Main mean line
-    _renderMeanLine(g, series, color, strokeWidth);
+    _renderMeanLine(sessionG, series, color, strokeWidth);
   }
 }
 
 function _renderMeanLine(
-  g: d3.Selection<SVGGElement, unknown, SVGSVGElement, unknown>,
+  g: d3.Selection<SVGGElement, unknown, SVGGElement, unknown>,
   series: SessionHourlyEnmo[],
   color: string,
   strokeWidth: number,
@@ -225,11 +230,10 @@ function _renderMeanLine(
 }
 
 function _renderSdBand(
-  g: d3.Selection<SVGGElement, unknown, SVGSVGElement, unknown>,
+  g: d3.Selection<SVGGElement, unknown, SVGGElement, unknown>,
   series: SessionHourlyEnmo[],
   color: string,
 ): void {
-  // Build forward (mean+sd) and backward (mean-sd) arcs and close into a polygon
   const outerPoints = series.map((d) => {
     const r = enmoToRadius(d.enmo_mean + (d.enmo_sd ?? 0));
     const a = hourAngle(d.hour);
@@ -259,15 +263,13 @@ function _countLegendRows(rows: SessionHourlyEnmo[]): number {
     rows.filter((r) => r.group === 'intervention').map((r) => r.session_number),
   );
   const hasObs = rows.some((r) => r.group === 'observational');
-  // intervention sessions + observational + SD swatch + MVPA threshold
   return sessions.size + (hasObs ? 1 : 0) + 2;
 }
 
 function _renderLegend(
   card: d3.Selection<SVGGElement, unknown, SVGSVGElement, unknown>,
+  clockG: d3.Selection<SVGGElement, unknown, SVGGElement, unknown>,
   rows: SessionHourlyEnmo[],
-  cx: number,
-  cy: number,
   legendH: number,
   cardH: number,
 ): void {
@@ -277,7 +279,7 @@ function _renderLegend(
 
   let itemY = 0;
 
-  // Intervention session lines
+  // Intervention session lines — interactive
   const sessions = [
     ...new Set(
       rows.filter((r) => r.group === 'intervention').map((r) => r.session_number),
@@ -291,47 +293,98 @@ function _renderLegend(
         .filter((r) => r.group === 'intervention' && r.session_number === ses)
         .map((r) => r.n_participants),
     );
-    _legendLine(legendG, itemY, color, 2.5, `Session ${ses} (n=${maxN})`);
+    _interactiveLegendLine(
+      legendG, clockG,
+      `intervention__${ses}`,
+      itemY, color, 2.5,
+      `Session ${ses} (n=${maxN})`,
+    );
     itemY += LEGEND_ITEM_H;
   }
 
-  // Observational line
+  // Observational line — interactive
   const hasObs = rows.some((r) => r.group === 'observational');
   if (hasObs) {
     const obsN = Math.max(
       ...rows.filter((r) => r.group === 'observational').map((r) => r.n_participants),
     );
-    _legendLine(legendG, itemY, COLORS.observational, 1.5, `Observational (n=${obsN})`);
+    _interactiveLegendLine(
+      legendG, clockG,
+      'observational__1',
+      itemY, COLORS.observational, 1.5,
+      `Observational (n=${obsN})`,
+    );
     itemY += LEGEND_ITEM_H;
   }
 
-  // SD band swatch
+  // Non-interactive: SD band swatch
   _legendSwatch(legendG, itemY, sessions[0] ? SESSION_COLORS[sessions[0]] : COLORS.intervention, '±1 SD band');
   itemY += LEGEND_ITEM_H;
 
-  // MVPA threshold
+  // Non-interactive: MVPA threshold
   _legendDashed(legendG, itemY, COLORS.textSecondary, 'MVPA threshold (100mg)');
 }
 
-function _legendLine(
+// ─── Interactive legend row ───────────────────────────────────────────────────
+
+function _interactiveLegendLine(
   g: d3.Selection<SVGGElement, unknown, SVGGElement, unknown>,
+  clockG: d3.Selection<SVGGElement, unknown, SVGGElement, unknown>,
+  sessionKey: string,
   y: number,
   color: string,
   strokeWidth: number,
   label: string,
 ): void {
-  g.append('line')
+  const rowG = g.append('g').style('cursor', 'pointer');
+
+  // Hover highlight background (transparent until hover)
+  const hitBg = rowG.append('rect')
+    .attr('x', -6)
+    .attr('y', y - 1)
+    .attr('width', LEGEND_HIT_W)
+    .attr('height', LEGEND_ITEM_H + 1)
+    .attr('rx', 4)
+    .attr('fill', 'rgba(255,255,255,0)')
+    .attr('stroke', 'none');
+
+  // Swatch line
+  rowG.append('line')
     .attr('x1', 0).attr('y1', y + LEGEND_ITEM_H / 2)
     .attr('x2', LEGEND_SWATCH_W).attr('y2', y + LEGEND_ITEM_H / 2)
     .attr('stroke', color).attr('stroke-width', strokeWidth);
-  g.append('text')
+
+  // Label text
+  rowG.append('text')
     .attr('x', LEGEND_SWATCH_W + 6).attr('y', y + LEGEND_ITEM_H / 2 + 1)
-    .attr('font-family', 'Inter, -apple-system, sans-serif')
+    .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
     .attr('font-size', 12).attr('font-weight', 400)
     .attr('fill', COLORS.textSecondary)
     .attr('dominant-baseline', 'central')
     .text(label);
+
+  rowG
+    .on('mouseover', function () {
+      // Highlight background
+      hitBg.attr('fill', 'rgba(255,255,255,0.05)');
+      // Dim all session groups…
+      clockG.selectAll<SVGGElement, unknown>('.session-group')
+        .transition().duration(150)
+        .attr('opacity', 0.07);
+      // …then bring this one back to full
+      clockG.select<SVGGElement>(`.session-group[data-session-key="${sessionKey}"]`)
+        .transition().duration(150)
+        .attr('opacity', 1);
+    })
+    .on('mouseout', function () {
+      hitBg.attr('fill', 'rgba(255,255,255,0)');
+      clockG.selectAll<SVGGElement, unknown>('.session-group')
+        .transition().duration(200)
+        .attr('opacity', 1);
+    });
 }
+
+// ─── Static legend helpers ────────────────────────────────────────────────────
 
 function _legendSwatch(
   g: d3.Selection<SVGGElement, unknown, SVGGElement, unknown>,
@@ -346,7 +399,7 @@ function _legendSwatch(
     .attr('stroke', color).attr('stroke-width', 1);
   g.append('text')
     .attr('x', LEGEND_SWATCH_W + 6).attr('y', y + LEGEND_ITEM_H / 2 + 1)
-    .attr('font-family', 'Inter, -apple-system, sans-serif')
+    .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
     .attr('font-size', 12).attr('font-weight', 400)
     .attr('fill', COLORS.textSecondary)
     .attr('dominant-baseline', 'central')
@@ -366,7 +419,7 @@ function _legendDashed(
     .attr('stroke-dasharray', '4 3');
   g.append('text')
     .attr('x', LEGEND_SWATCH_W + 6).attr('y', y + LEGEND_ITEM_H / 2 + 1)
-    .attr('font-family', 'Inter, -apple-system, sans-serif')
+    .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
     .attr('font-size', 12).attr('font-weight', 400)
     .attr('fill', COLORS.textSecondary)
     .attr('dominant-baseline', 'central')

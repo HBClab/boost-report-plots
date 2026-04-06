@@ -29,7 +29,7 @@ function ensureTooltip(): d3.Selection<HTMLDivElement, unknown, HTMLElement, unk
       .style('position', 'fixed')
       .style('background', 'rgba(33,33,48,0.92)')
       .style('color', '#fff')
-      .style('font', '12px/1.5 Inter, -apple-system, sans-serif')
+      .style('font', '12px/1.5 DM Sans, Inter, -apple-system, sans-serif')
       .style('padding', '6px 10px')
       .style('border-radius', '4px')
       .style('pointer-events', 'none')
@@ -66,7 +66,7 @@ export function renderPlot1(
     .attr('font-size', 14)
     .attr('font-weight', 600)
     .attr('fill', COLORS.textPrimary)
-    .attr('font-family', 'Inter, -apple-system, sans-serif')
+    .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
     .text(`${groupLabel} — 24-Hour Activity Composition`);
 
   const titleH = 28; // height consumed by title + small gap
@@ -106,7 +106,7 @@ export function renderPlot1(
       .attr('text-anchor', 'middle')
       .attr('font-size', 11)
       .attr('fill', COLORS.textSecondary)
-      .attr('font-family', 'Inter, -apple-system, sans-serif')
+      .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
       .text(`${Math.round(pct * 100)}%`);
   }
 
@@ -122,7 +122,7 @@ export function renderPlot1(
       .attr('font-size', 13)
       .attr('font-weight', 500)
       .attr('fill', COLORS.textPrimary)
-      .attr('font-family', 'Inter, -apple-system, sans-serif')
+      .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
       .text(row.day_type);
 
     // Stacked segments
@@ -158,7 +158,7 @@ export function renderPlot1(
           .attr('font-size', 11)
           .attr('font-weight', 600)
           .attr('fill', '#fff')
-          .attr('font-family', 'Inter, -apple-system, sans-serif')
+          .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
           .text(`${Math.round(prop * 100)}%`);
       }
 
@@ -206,7 +206,7 @@ export function renderPlot1(
       .attr('y', legendY + LEGEND_SQUARE - 1)
       .attr('font-size', 12)
       .attr('fill', COLORS.textSecondary)
-      .attr('font-family', 'Inter, -apple-system, sans-serif')
+      .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
       .text(SEGMENT_LABELS[seg]);
   });
 
@@ -217,7 +217,7 @@ export function renderPlot1(
     .attr('y', footnoteY)
     .attr('font-size', 10)
     .attr('fill', COLORS.textSecondary)
-    .attr('font-family', 'Inter, -apple-system, sans-serif')
+    .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
     .text('CI/error bands available in interactive D3 version');
 }
 
