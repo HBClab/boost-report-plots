@@ -10,7 +10,7 @@ from .repository import upsert_session_day
 
 
 DEFAULT_DERIVATIVES_ROOT = Path(
-    "/mnt/lss/Projects/BOOST/InterventionStudy/3-experiment/data/act-int-final-test-2/derivatives/GGIR-3.2.6"
+    "/mnt/lss/Projects/BOOST/ObservationalStudy/3-experiment/data/act-obs-final-test-2/derivatives/GGIR-3.2.6"
 )
 
 

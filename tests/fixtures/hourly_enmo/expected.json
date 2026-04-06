@@ -1,0 +1,102 @@
+{
+  "_comment": "Pre-computed expected values for fixture data. Used to validate the hourly ENMO aggregation logic.",
+  "_computation": "participant_mean = mean(ENMO epochs in that hour); group_mean = mean(participant_means); group_sd = sample SD of participant means (ddof=1); sd=null when n_participants=1",
+  "intervention": {
+    "session_1": {
+      "hour_0": {
+        "enmo_mean": 18.808,
+        "enmo_sd": 1.850,
+        "n_participants": 2,
+        "_detail": "sub-1001 mean=17.500, sub-1002 mean=20.117"
+      },
+      "hour_1": {
+        "enmo_mean": 15.417,
+        "enmo_sd": 1.390,
+        "n_participants": 2,
+        "_detail": "sub-1001 mean=14.433, sub-1002 mean=16.400"
+      },
+      "hour_3": {
+        "enmo_mean": 10.100,
+        "enmo_sd": null,
+        "n_participants": 1,
+        "_detail": "sub-1003 only; SD=null (N=1 case for US2 validation)"
+      },
+      "hour_6": {
+        "enmo_mean": 72.792,
+        "enmo_sd": 2.369,
+        "n_participants": 2,
+        "_detail": "sub-1001 mean=71.117, sub-1002 mean=74.467"
+      },
+      "hour_12": {
+        "enmo_mean": 97.692,
+        "enmo_sd": 3.359,
+        "n_participants": 2,
+        "_detail": "sub-1001 mean=95.317, sub-1002 mean=100.067"
+      },
+      "hour_18": {
+        "enmo_mean": 89.433,
+        "enmo_sd": 3.417,
+        "n_participants": 2,
+        "_detail": "sub-1001 mean=87.017, sub-1002 mean=91.850"
+      }
+    },
+    "session_2": {
+      "hour_0": {
+        "enmo_mean": 18.008,
+        "enmo_sd": 1.214,
+        "n_participants": 2,
+        "_detail": "sub-1001 mean=17.150, sub-1002 mean=18.867"
+      },
+      "hour_1": {
+        "enmo_mean": 15.133,
+        "enmo_sd": 1.100,
+        "n_participants": 2,
+        "_detail": "sub-1001 mean=14.367, sub-1002 mean=15.883 (approx)"
+      },
+      "hour_6": {
+        "enmo_mean": 78.942,
+        "enmo_sd": 2.935,
+        "n_participants": 2,
+        "_detail": "sub-1001 mean=76.867, sub-1002 mean=81.017"
+      },
+      "hour_12": {
+        "enmo_mean": 107.042,
+        "enmo_sd": 2.557,
+        "n_participants": 2,
+        "_detail": "sub-1001 mean=105.233, sub-1002 mean=108.850"
+      },
+      "hour_18": {
+        "enmo_mean": 97.517,
+        "enmo_sd": 2.216,
+        "n_participants": 2,
+        "_detail": "sub-1001 mean=95.950, sub-1002 mean=99.083"
+      }
+    }
+  },
+  "validation_spot_checks": [
+    {
+      "description": "US1: Session 1 hour 12 group mean within 0.01mg of expected",
+      "group": "intervention",
+      "session_number": 1,
+      "hour": 12,
+      "expected_enmo_mean": 97.692,
+      "tolerance_mg": 0.01
+    },
+    {
+      "description": "US1: Session 2 hour 6 group mean within 0.01mg of expected",
+      "group": "intervention",
+      "session_number": 2,
+      "hour": 6,
+      "expected_enmo_mean": 78.942,
+      "tolerance_mg": 0.01
+    },
+    {
+      "description": "US2: Session 1 hour 3 enmo_sd is null (N=1 participant)",
+      "group": "intervention",
+      "session_number": 1,
+      "hour": 3,
+      "expected_enmo_sd": null,
+      "expected_n_participants": 1
+    }
+  ]
+}

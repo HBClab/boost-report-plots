@@ -157,15 +157,28 @@ One row per participant × session. Required columns: `participant_id`, `group` 
 
 ## Plot 3: Radial Activity Clock
 
-*(Unchanged from v2.0)*
+*(Updated in v3.0 — per-session intervention lines replace single aggregated intervention line)*
 
 ### Purpose
 
-Show mean acceleration (ENMO, mg) by hour of day across all participants, with ±1 SD shading and separate lines per group. Annotate M5 (most active 5-hour window peak) and L5 (least active 5-hour window trough).
+Show mean acceleration (ENMO, mg) by hour of day, with ±1 SD shading. The intervention arm renders one line per session (S1–S4, or however many sessions have data), enabling comparison of whether participants' circadian activity patterns shifted across intervention sessions. The observational group is shown as a single aggregated line.
 
 ### Data requirements
 
-One row per hour (0–23). Required columns: `hour` (0–23), `intervention_mean`, `intervention_sd`, `observational_mean`, `observational_sd`. All values in mg (milli-gravitational units).
+One row per `(group, session_number, hour)`. Required columns:
+
+| Column | Type | Description |
+|---|---|---|
+| `group` | `"intervention"` \| `"observational"` | Participant group |
+| `session_number` | integer 1–4 | Session number |
+| `hour` | integer 0–23 | Clock hour (0 = midnight–1am) |
+| `enmo_mean` | number | Mean ENMO across participants (mg) |
+| `enmo_sd` | number \| null | Sample SD (mg); null when only 1 participant contributed |
+| `n_participants` | integer | Participants contributing to this session/hour cell |
+
+Source: `session_hourly_enmo` table in PostgreSQL (see `specs/003-act-time-series/data-model.md`).
+
+**Observational group**: the observational arm stores its data as a single aggregated series (`session_number = 1`). It renders as one line, consistent with prior behavior.
 
 ### Visual encoding
 
@@ -173,12 +186,17 @@ One row per hour (0–23). Required columns: `hour` (0–23), `intervention_mean
 - **Hour markers:** Tick marks at each hour; labeled at 12am, 3am, 6am, 9am, 12pm, 3pm, 6pm, 9pm (11px Regular secondary text)
 - **Concentric rings:** Three rings at 38mg, 76mg, 115mg with ring labels at the 12am position
 - **MVPA threshold line:** Dashed ring at 100mg, labeled "MVPA threshold (100mg)"
-- **Intervention line:** `#247F8F` teal, 2.5px stroke
-- **Observational line:** `#DE7833` orange, 1.5px stroke
-- **SD shading:** Filled polygon ±1 SD around each group mean; 20% opacity fill matching group color
-- **M5 annotation:** Filled circle + label at the hour of peak acceleration
-- **L5 annotation:** Filled circle + label at the hour of trough acceleration
-- **Legend:** Below clock — SD band swatch, Intervention line, Observational line, MVPA threshold dashed line
+- **Intervention lines (per session):** One line per session present in data; 2.5px stroke; sequential teal palette:
+  | Session | Color |
+  |---------|-------|
+  | S1 | `#247F8F` |
+  | S2 | `#3BA8BD` |
+  | S3 | `#6EC4D1` |
+  | S4 | `#A4DCE6` |
+- **Observational line:** `#DE7833` orange, 1.5px stroke; single aggregated line (unchanged)
+- **SD shading:** Filled polygon ±1 SD around each line's mean per hour; 20% opacity fill matching line color; omitted for hours where `enmo_sd` is null (N=1)
+- **M5/L5 annotations:** Suppressed for all lines (per-session M5/L5 would produce unacceptable visual clutter with 4+ lines)
+- **Legend:** Below clock — one entry per intervention session labeled `"Session N (n=NNN)"` using max N across hours for that session; one entry for the observational line; SD band swatch; MVPA threshold dashed line
 
 ### Layout specifics
 
@@ -196,6 +214,7 @@ One row per hour (0–23). Required columns: `hour` (0–23), `intervention_mean
 |---|---|---|
 | 2.0 | March 25, 2026 | Post-implementation baseline; D3 implementation notes added |
 | 2.1 | April 1, 2026 | Plot 1: Sleep separated from Sedentary as distinct first segment; normalization changed from waking-day to full 24-hour day; `sleep_min` data column added; color palette extended with Sleep (`#4A5568`); legend updated to 5 items; Figma file updated |
+| 3.0 | April 3, 2026 | Plot 3: Per-session intervention lines replace single aggregated intervention line; per-session SD shading; M5/L5 suppressed; session palette added (S1–S4 sequential teal); per-session N in legend; new `session_hourly_enmo` data source |
 
 ---
 **Figma file:** https://www.figma.com/design/yteer4gUc7ZkGKFOBgKlPk/Boost-Report-Figures  

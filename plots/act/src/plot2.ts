@@ -11,7 +11,7 @@ function ensureTooltip(): d3.Selection<HTMLDivElement, unknown, HTMLElement, unk
       .style('position', 'fixed')
       .style('background', 'rgba(33,33,48,0.92)')
       .style('color', '#fff')
-      .style('font', '12px/1.5 Inter, -apple-system, sans-serif')
+      .style('font', '12px/1.5 DM Sans, Inter, -apple-system, sans-serif')
       .style('padding', '6px 10px')
       .style('border-radius', '4px')
       .style('pointer-events', 'none')
@@ -88,7 +88,7 @@ export function renderPlot2(
     .attr('font-size', 14)
     .attr('font-weight', 600)
     .attr('fill', COLORS.textPrimary)
-    .attr('font-family', 'Inter, -apple-system, sans-serif')
+    .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
     .text('Intervention — Sedentary & MVPA by Participant × Session');
 
   const chartTop = CARD_PAD + TITLE_H;
@@ -128,7 +128,7 @@ export function renderPlot2(
       .attr('text-anchor', 'middle')
       .attr('font-size', 10)
       .attr('fill', COLORS.textSecondary)
-      .attr('font-family', 'Inter, -apple-system, sans-serif')
+      .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
       .text(`S${sn}`);
     // Right panel label
     g.append('text')
@@ -137,7 +137,7 @@ export function renderPlot2(
       .attr('text-anchor', 'middle')
       .attr('font-size', 10)
       .attr('fill', COLORS.textSecondary)
-      .attr('font-family', 'Inter, -apple-system, sans-serif')
+      .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
       .text(`S${sn}`);
   }
 
@@ -271,7 +271,7 @@ function renderGradientLegend(
     .attr('x', x).attr('y', y - 4)
     .attr('font-size', 10)
     .attr('fill', COLORS.textSecondary)
-    .attr('font-family', 'Inter, -apple-system, sans-serif')
+    .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
     .text(`${label}  Low`);
 
   g.append('text')
@@ -279,6 +279,6 @@ function renderGradientLegend(
     .attr('text-anchor', 'end')
     .attr('font-size', 10)
     .attr('fill', COLORS.textSecondary)
-    .attr('font-family', 'Inter, -apple-system, sans-serif')
+    .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
     .text('High');
 }
