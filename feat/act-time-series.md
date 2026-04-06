@@ -1,4 +1,6 @@
 # Feature Spec -> Accelerometer Time Series Plot
+**Status: Implemented** — see `specs/003-act-time-series/` for full plan, research, data model, and contracts.
+Storage recommendation: DB-stored aggregates (`session_hourly_enmo` table). See `specs/003-act-time-series/spec.md`.
 ---
 
 ## Premise
@@ -16,7 +18,6 @@
 
 ## Contextual information
 ---
-
 **Where data is found**
 Path pattern: `/mnt/lss/Projects/BOOST/InterventionStudy/3-experiment/data/act-int-final-test-2/derivatives/GGIR-3.2.6/sub-****/accel/ses-*/output_ses-*/meta/csv/sub-****_ses-*_accel.csv.RData.csv`
 With the columns: `timestamp, anglez, ENMO` - EXTRACT ENMO ONLY IGNORE ANGLEZ

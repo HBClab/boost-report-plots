@@ -1,5 +1,5 @@
 import pg from 'pg';
-import type { DayTypeAggregate, SessionEntry } from '../src/types.js';
+import type { DayTypeAggregate, SessionEntry, SessionHourlyEnmo } from '../src/types.js';
 
 const { Pool } = pg;
 
@@ -111,6 +111,36 @@ type Plot2Row = {
   avg_sed_min: string;
   avg_mvpa_min: string;
 };
+
+// ---------------------------------------------------------------------------
+// Plot 3: hour-level ENMO per group per session (radial activity clock)
+// ---------------------------------------------------------------------------
+
+const PLOT3_SQL = `
+  SELECT "group", session_number, hour, enmo_mean, enmo_sd, n_participants
+  FROM session_hourly_enmo
+  ORDER BY "group", session_number, hour
+`;
+
+export async function plot3Query(): Promise<SessionHourlyEnmo[]> {
+  const rows = await query<{
+    group: string;
+    session_number: string;
+    hour: string;
+    enmo_mean: string;
+    enmo_sd: string | null;
+    n_participants: string;
+  }>(PLOT3_SQL);
+
+  return rows.map((r) => ({
+    group: r.group as 'intervention' | 'observational',
+    session_number: parseInt(r.session_number, 10),
+    hour: parseInt(r.hour, 10),
+    enmo_mean: parseFloat(r.enmo_mean),
+    enmo_sd: r.enmo_sd !== null ? parseFloat(r.enmo_sd) : null,
+    n_participants: parseInt(r.n_participants, 10),
+  }));
+}
 
 export async function plot2Query(): Promise<
   { subject_code: string; sessions: SessionEntry[] }[]

@@ -33,3 +33,21 @@ CREATE TABLE IF NOT EXISTS session_days (
 CREATE INDEX IF NOT EXISTS idx_sessions_subject_id ON sessions(subject_id);
 CREATE INDEX IF NOT EXISTS idx_session_days_session_id ON session_days(session_id);
 CREATE INDEX IF NOT EXISTS idx_session_days_day_date ON session_days(day_date);
+
+-- 003-act-time-series: Pre-computed hour-level ENMO statistics per group per session.
+-- One row per (group, session_number, hour). Populated by the hourly-enmo importer;
+-- consumed by GET /api/plot3 to render the radial activity clock.
+CREATE TABLE IF NOT EXISTS session_hourly_enmo (
+    id BIGSERIAL PRIMARY KEY,
+    "group" TEXT NOT NULL CHECK ("group" IN ('intervention', 'observational')),
+    session_number SMALLINT NOT NULL CHECK (session_number > 0),
+    hour SMALLINT NOT NULL CHECK (hour >= 0 AND hour <= 23),
+    enmo_mean DOUBLE PRECISION NOT NULL,
+    enmo_sd DOUBLE PRECISION,
+    n_participants INTEGER NOT NULL CHECK (n_participants > 0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE ("group", session_number, hour)
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_hourly_enmo_group_session
+    ON session_hourly_enmo ("group", session_number);

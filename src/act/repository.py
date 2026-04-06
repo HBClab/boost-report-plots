@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Iterable
 
+from .hourly_enmo import HourlyEnmoRow
 from .parser import SessionDayRecord
 
 try:
@@ -84,6 +86,56 @@ def upsert_session_day(connection, record: SessionDayRecord) -> bool:
             },
         )
     return existed
+
+
+def upsert_session_hourly_enmo(
+    connection,
+    rows: Iterable[HourlyEnmoRow],
+    *,
+    group: str | None = None,
+    session_number: int | None = None,
+) -> int:
+    """Replace hour-level ENMO rows for the given group/session and insert new ones.
+
+    If *group* and *session_number* are provided, existing rows for that
+    combination are deleted first (idempotent re-import).  When either is
+    *None*, all rows are simply inserted and the caller is responsible for
+    avoiding unique-constraint conflicts.
+
+    Returns the number of rows inserted.
+    """
+    if group is not None and session_number is not None:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                'DELETE FROM session_hourly_enmo WHERE "group" = %s AND session_number = %s',
+                (group, session_number),
+            )
+
+    inserted = 0
+    with connection.cursor() as cursor:
+        for row in rows:
+            cursor.execute(
+                """
+                INSERT INTO session_hourly_enmo
+                    ("group", session_number, hour, enmo_mean, enmo_sd, n_participants)
+                VALUES (%(group)s, %(session_number)s, %(hour)s,
+                        %(enmo_mean)s, %(enmo_sd)s, %(n_participants)s)
+                ON CONFLICT ("group", session_number, hour) DO UPDATE
+                SET enmo_mean     = EXCLUDED.enmo_mean,
+                    enmo_sd       = EXCLUDED.enmo_sd,
+                    n_participants = EXCLUDED.n_participants
+                """,
+                {
+                    "group": row.group,
+                    "session_number": row.session_number,
+                    "hour": row.hour,
+                    "enmo_mean": row.enmo_mean,
+                    "enmo_sd": row.enmo_sd,
+                    "n_participants": row.n_participants,
+                },
+            )
+            inserted += 1
+    return inserted
 
 
 def fetch_counts(connection) -> dict[str, int]:

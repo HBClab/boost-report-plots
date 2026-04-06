@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import csv
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 
@@ -140,3 +140,58 @@ def _parse_percentage(raw_value: str | None, *, field_name: str) -> float:
     if not 0.0 <= value <= 100.0:
         raise ParseError(f"{field_name} is outside 0-100: {value}")
     return value
+
+
+# ---------------------------------------------------------------------------
+# GGIR epoch CSV parser (for session_hourly_enmo aggregation)
+# File format: sub-****_ses-*_accel.csv.RData.csv
+# Required columns: timestamp, ENMO  (anglez is discarded)
+# ---------------------------------------------------------------------------
+
+EPOCH_REQUIRED_COLUMNS = ("timestamp", "ENMO")
+
+
+@dataclass(frozen=True)
+class EpochRecord:
+    hour: int          # 0–23, derived from timestamp
+    enmo: float        # mg
+
+
+def parse_epoch_file(csv_path: Path) -> tuple[list[EpochRecord], list[str]]:
+    """Parse a GGIR epoch CSV file and return (records, issues).
+
+    Only the ``timestamp`` and ``ENMO`` columns are read; ``anglez`` is
+    discarded.  Each returned record contains the clock hour extracted from
+    the timestamp and the ENMO value in mg.
+    """
+    records: list[EpochRecord] = []
+    issues: list[str] = []
+
+    with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fieldnames = reader.fieldnames or []
+        missing = [col for col in EPOCH_REQUIRED_COLUMNS if col not in fieldnames]
+        if missing:
+            return [], [f"missing required columns: {', '.join(missing)}"]
+
+        for row_number, row in enumerate(reader, start=2):
+            try:
+                record = _parse_epoch_row(row, row_number=row_number)
+                records.append(record)
+            except ParseError as exc:
+                issues.append(f"row {row_number}: {exc}")
+
+    return records, issues
+
+
+def _parse_epoch_row(row: dict[str, str], *, row_number: int) -> EpochRecord:
+    raw_ts = (row.get("timestamp") or "").strip()
+    if not raw_ts:
+        raise ParseError("timestamp is blank")
+    try:
+        dt = datetime.fromisoformat(raw_ts)
+    except ValueError as exc:
+        raise ParseError(f"timestamp is not a valid ISO datetime: {raw_ts}") from exc
+
+    enmo = _parse_float(row.get("ENMO"), field_name="ENMO")
+    return EpochRecord(hour=dt.hour, enmo=enmo)

@@ -37,3 +37,18 @@ export interface CardLayout {
   w: number;
   h: number;
 }
+
+// 003-act-time-series: Hour-level ENMO statistics per group per session
+// Matches the API contract in specs/003-act-time-series/contracts/plot3-enmo-endpoint.md
+export interface SessionHourlyEnmo {
+  group: 'intervention' | 'observational';
+  session_number: number; // 1–4
+  hour: number;           // 0–23
+  enmo_mean: number;      // mg
+  enmo_sd: number | null; // mg; null when n_participants === 1
+  n_participants: number;
+}
+
+export interface Plot3ApiResponse {
+  rows: SessionHourlyEnmo[];
+}

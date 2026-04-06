@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { pool, plot1Query, plot2Query } from './db.js';
+import { pool, plot1Query, plot2Query, plot3Query } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -53,6 +53,19 @@ app.get('/api/plot2', async (_req, res) => {
     res.json({ group: 'intervention', subjects });
   } catch (err) {
     console.error('/api/plot2 error:', err);
+    res.status(500).json({ error: 'Database query failed', detail: String(err) });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/plot3 — hour-level ENMO per group per session (radial clock)
+// ---------------------------------------------------------------------------
+app.get('/api/plot3', async (_req, res) => {
+  try {
+    const rows = await plot3Query();
+    res.json({ rows });
+  } catch (err) {
+    console.error('/api/plot3 error:', err);
     res.status(500).json({ error: 'Database query failed', detail: String(err) });
   }
 });

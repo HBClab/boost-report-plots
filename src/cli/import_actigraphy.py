@@ -5,8 +5,9 @@ import os
 import sys
 from pathlib import Path
 
+from src.act.hourly_enmo import aggregate_hourly_enmo, discover_epoch_files
 from src.act.importer import DEFAULT_DERIVATIVES_ROOT, import_derivatives_tree
-from src.act.repository import connect, fetch_counts, fetch_lineage_rows, init_schema
+from src.act.repository import connect, fetch_counts, fetch_lineage_rows, init_schema, upsert_session_hourly_enmo
 
 
 DEFAULT_DB_URL = os.environ.get("ACTIGRAPHY_DB_URL", "postgresql:///boost_actigraphy")
@@ -31,6 +32,23 @@ def build_parser() -> argparse.ArgumentParser:
     import_parser.add_argument("--init-db", action="store_true", help="Initialize schema before importing")
     import_parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON output")
 
+    hourly_parser = subparsers.add_parser(
+        "import-hourly-enmo",
+        help="Aggregate GGIR epoch files into hour-level ENMO statistics and store in session_hourly_enmo",
+    )
+    hourly_parser.add_argument(
+        "--root",
+        default=str(DEFAULT_DERIVATIVES_ROOT),
+        help="Root derivatives directory containing sub-****/accel/ses-*/... epoch CSV files.",
+    )
+    hourly_parser.add_argument(
+        "--group",
+        default="intervention",
+        choices=["intervention", "observational"],
+        help="Group label to assign to all subjects found under --root (default: intervention).",
+    )
+    hourly_parser.add_argument("--init-db", action="store_true", help="Initialize schema before importing")
+
     return parser
 
 
@@ -52,6 +70,9 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.init_db:
             init_schema(connection, schema_path=SCHEMA_PATH)
+
+        if args.command == "import-hourly-enmo":
+            return _run_hourly_enmo(connection, args)
 
         summary = import_derivatives_tree(connection, Path(args.root))
         counts = fetch_counts(connection)
@@ -78,6 +99,45 @@ def main(argv: list[str] | None = None) -> int:
             for subject_code, session_number, day_date, source_file in lineage[:5]:
                 print(f"- {subject_code} ses-{session_number} {day_date} <- {source_file}")
 
+    return 0
+
+
+def _run_hourly_enmo(connection, args) -> int:
+    root = Path(args.root)
+    issues: list[str] = []
+
+    epoch_files = discover_epoch_files(root)
+    print(f"Found {len(epoch_files)} epoch file(s) under {root}")
+
+    rows = aggregate_hourly_enmo(
+        epoch_files,
+        default_group=args.group,
+        issues_out=issues,
+    )
+
+    if issues:
+        print(f"Aggregation warnings ({len(issues)}):")
+        for issue in issues:
+            print(f"  - {issue}")
+
+    # Group rows by (group, session_number) for idempotent upsert reporting
+    from itertools import groupby
+    total_inserted = 0
+    for (grp, ses), group_rows in groupby(
+        sorted(rows, key=lambda r: (r.group, r.session_number)),
+        key=lambda r: (r.group, r.session_number),
+    ):
+        n = upsert_session_hourly_enmo(
+            connection,
+            list(group_rows),
+            group=grp,
+            session_number=ses,
+        )
+        total_inserted += n
+        print(f"  {grp} session {ses}: {n} hour(s) written")
+
+    connection.commit()
+    print(f"Total: {total_inserted} row(s) written to session_hourly_enmo")
     return 0
 
 
