@@ -24,8 +24,17 @@
     "@types/node": "^20.14.0",
     "@types/pg": "^8.11.6",
     "concurrently": "^8.2.2",
+    "esbuild": "^0.17.19",
     "ts-node": "^10.9.2",
     "tsx": "^4.15.0",
     "typescript": "^5.5.2"
+  },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "esbuild"
+    ],
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
