@@ -46,6 +46,15 @@ export function getHrHeatmapCardHeight(rosterSize: number): number {
   return topPad + rosterSize * (minCellH + gap) + legendH + botPad;
 }
 
+function adherenceColor(adherenceRatio: number | null): string {
+  if (adherenceRatio == null) return C.noData;
+  return d3.interpolateRgb(C.notMet, C.met)(clamp(adherenceRatio, 0, 1));
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
 // ─── Adherence Trend ─────────────────────────────────────────────────────────
 export function renderHrAdherenceTrend(
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
@@ -181,17 +190,13 @@ export function renderHrHeatmapCard(
     Supervised: labelWidth,
     Unsupervised: labelWidth + panelW + gutter,
   };
-  const statusColor: Record<HrHeatmapStatus, string> = {
-    met: C.met, not_met: C.notMet, no_data: C.noData,
-  };
-
   card.append('text').attr('x', margins.left).attr('y', 26)
     .attr('fill', C.textPrimary).attr('font-size', 14).attr('font-weight', 600)
     .attr('font-family', C.font).attr('letter-spacing', '-0.01em')
     .text('Individual Weekly Adherence Heatmaps');
   card.append('text').attr('x', margins.left).attr('y', 44)
     .attr('fill', C.textSecondary).attr('font-size', 11).attr('font-family', C.font)
-    .text('50% weekly threshold · shared subject roster · no-data cells preserved');
+    .text('Continuous weekly adherence percentage · shared subject roster · no-data cells preserved');
 
   const heatmap = card.append('g').attr('transform', `translate(${margins.left},${margins.top})`);
   const tooltip = ensureTooltip();
@@ -228,10 +233,14 @@ export function renderHrHeatmapCard(
         );
         const status = summary?.status ?? 'no_data';
         const color = group === 'Supervised' ? C.supervised : C.unsupervised;
+        const fillColor = adherenceColor(summary?.adherenceRatio ?? null);
         const rect = heatmap.append('rect')
           .attr('x', panelX[group] + wi * cellW).attr('y', rowY)
           .attr('width', Math.max(12, cellW - 2)).attr('height', cellH)
-          .attr('rx', 2).attr('fill', statusColor[status]);
+          .attr('rx', 2)
+          .attr('fill', fillColor)
+          .attr('stroke', status === 'no_data' ? C.grid : 'none')
+          .attr('stroke-width', status === 'no_data' ? 1 : 0);
 
         if (status !== 'no_data' && summary) {
           rect.style('cursor', 'pointer')
@@ -240,8 +249,8 @@ export function renderHrHeatmapCard(
               tooltip.html(
                 `<strong style="color:${color}">${group}</strong> · Wk ${week}<br>` +
                 `${entry.subject}<br>` +
-                `<span style="color:${statusColor[status]}">${status === 'met' ? 'Met' : 'Not Met'}</span>` +
-                ` · ${pctStr} (${summary.metSessions}/${summary.totalSessions} sessions)`
+                `<span style="color:${fillColor}">${pctStr} adherence</span>` +
+                ` (${summary.metSessions}/${summary.totalSessions} sessions)`
               ).style('opacity', '1')
                 .style('left', `${event.clientX + 14}px`)
                 .style('top', `${event.clientY - 10}px`);
@@ -257,16 +266,71 @@ export function renderHrHeatmapCard(
 
   // Legend
   const legendY = 18 + roster.length * (cellH + rowGap) + 16;
-  [
-    { label: 'Met (≥50%)',  color: C.met },
-    { label: 'Not Met',     color: C.notMet },
-    { label: 'No Data',     color: C.noData, border: C.grid },
-  ].forEach((item, i) => {
-    const g = heatmap.append('g').attr('transform', `translate(${i * 110},${legendY})`);
-    g.append('rect').attr('width', 12).attr('height', 12).attr('rx', 2)
-      .attr('fill', item.color)
-      .attr('stroke', item.border ?? 'none').attr('stroke-width', item.border ? 1 : 0);
-    g.append('text').attr('x', 18).attr('y', 10).attr('font-size', 11)
-      .attr('fill', C.textSecondary).attr('font-family', C.font).text(item.label);
-  });
+  const defs = svg.select<SVGDefsElement>('defs').empty()
+    ? svg.append<SVGDefsElement>('defs' as 'defs')
+    : svg.select<SVGDefsElement>('defs');
+  const gradientId = 'hr-adherence-gradient';
+  defs.select(`#${gradientId}`).remove();
+  const gradient = defs.append('linearGradient')
+    .attr('id', gradientId)
+    .attr('x1', '0%')
+    .attr('x2', '100%');
+  gradient.append('stop').attr('offset', '0%').attr('stop-color', C.notMet);
+  gradient.append('stop').attr('offset', '100%').attr('stop-color', C.met);
+
+  heatmap.append('text')
+    .attr('x', 0)
+    .attr('y', legendY - 6)
+    .attr('font-size', 11)
+    .attr('fill', C.textSecondary)
+    .attr('font-family', C.font)
+    .text('Weekly adherence');
+  heatmap.append('rect')
+    .attr('x', 0)
+    .attr('y', legendY)
+    .attr('width', 160)
+    .attr('height', 12)
+    .attr('rx', 2)
+    .attr('fill', `url(#${gradientId})`);
+  heatmap.append('text')
+    .attr('x', 0)
+    .attr('y', legendY + 26)
+    .attr('font-size', 10)
+    .attr('fill', C.textSecondary)
+    .attr('font-family', C.fontMono)
+    .text('0%');
+  heatmap.append('text')
+    .attr('x', 80)
+    .attr('y', legendY + 26)
+    .attr('text-anchor', 'middle')
+    .attr('font-size', 10)
+    .attr('fill', C.textSecondary)
+    .attr('font-family', C.fontMono)
+    .text('50%');
+  heatmap.append('text')
+    .attr('x', 160)
+    .attr('y', legendY + 26)
+    .attr('text-anchor', 'end')
+    .attr('font-size', 10)
+    .attr('fill', C.textSecondary)
+    .attr('font-family', C.fontMono)
+    .text('100%');
+
+  const noDataLegend = heatmap.append('g').attr('transform', 'translate(210,0)');
+  noDataLegend.append('rect')
+    .attr('x', 0)
+    .attr('y', legendY)
+    .attr('width', 12)
+    .attr('height', 12)
+    .attr('rx', 2)
+    .attr('fill', C.noData)
+    .attr('stroke', C.grid)
+    .attr('stroke-width', 1);
+  noDataLegend.append('text')
+    .attr('x', 18)
+    .attr('y', legendY + 10)
+    .attr('font-size', 11)
+    .attr('fill', C.textSecondary)
+    .attr('font-family', C.font)
+    .text('No Data');
 }
