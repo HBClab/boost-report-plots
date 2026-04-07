@@ -65,6 +65,7 @@ export function renderPlot3(
 
   // Card background
   const card = svg.append('g').attr('transform', `translate(${x},${y})`);
+  card.attr('data-plot', '3');
   card.append('rect')
     .attr('width', w).attr('height', h)
     .attr('rx', 12).attr('ry', 12)

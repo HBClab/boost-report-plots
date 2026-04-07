@@ -11,8 +11,8 @@ source CSV (`zone_out.csv`):
 | ------------------- | ------- | --------------------------------------------------------------------------------------------------- |
 | `group`             | string  | `"Supervised"` or `"Unsupervised"` — whether sessions were clinician-led                            |
 | `subject`           | string  | Participant ID, e.g. `sub8000`                                                                      |
-| `week`              | integer | Study week number (1–6)                                                                             |
-| `session`           | integer | Session number (not used in these plots)                                                            |
+| `week`              | integer | Study week number. The source file may contain later weeks, but this dashboard renders weeks 1–6 only |
+| `session`           | integer | Session number within the week; used to compute the weekly 75% adherence threshold in Panel B      |
 | `time_in_allowed_s` | float   | Seconds with HR inside the target zone                                                              |
 | `time_above_s`      | float   | Seconds with HR above the target zone                                                               |
 | `time_below_s`      | float   | Seconds with HR below the target zone                                                               |
@@ -122,8 +122,9 @@ by text `12px` to the right. Items spaced `90px` apart horizontally.
 This card contains **two stacked panels**:
 1. **(Top) Line chart** — the proportion of sessions per week where `bounded_met == true`,
    for each group, with a shaded ±1 SD confidence band.
-2. **(Bottom) Heatmap** — individual subject adherence across all 6 weeks; one row per
-   subject, one column per week, coloured by met / not met / no data.
+2. **(Bottom) Aligned dual heatmap** — weekly subject adherence across all 6 weeks,
+   rendered as side-by-side Supervised and Unsupervised panels that share the same
+   subject roster and row order.
 
 ### Card dimensions
 - Position: `x: 723, y: 40`
@@ -178,41 +179,72 @@ Each `10×10px` marker, `border-radius: 2px`, label `12px` to the right.
 
 ---
 
-### Panel B — Heatmap
+### Panel B — Aligned Weekly Heatmaps
 
 #### Position
 Starts `36px` below the line chart x-axis baseline.
 
 #### Dimensions
-- **Rows**: one per unique subject (sort alphabetically)
-- **Columns**: 6 (weeks 1–6)
-- Cell width: `(lineChartWidth / 6) - 2px`
-- Cell height: `18px` (or shrink proportionally if more subjects)
+- Two heatmap panels share the lower section: **Supervised** on the left and
+  **Unsupervised** on the right, separated by a `24px` gutter.
+- **Rows**: one per subject in the **union** of Supervised and Unsupervised
+  subject IDs observed in weeks 1–6, sorted alphabetically
+- **Columns**: 6 (weeks 1–6) in each panel
+- Cell width: `(panelWidth / 6) - 2px`
+- Cell height: `18px` or shrink proportionally when the shared subject roster
+  would otherwise exceed the available panel height
 - Row gap: `2px`, column gap: `2px`
 - Cell `border-radius: 2px`
 
+#### Data preparation
+1. Filter the dataset to study weeks 1–6 only.
+2. For each `(group, subject, week)`, compute:
+   - `total_sessions = count(*)`
+   - `met_sessions = count(bounded_met == true)`
+   - `weekly_adherence = met_sessions / total_sessions`
+3. Derive the display state:
+   - **Met** when `weekly_adherence >= 0.75`
+   - **Not Met** when `total_sessions > 0` and `weekly_adherence < 0.75`
+   - **No Data** when `total_sessions == 0`
+4. Build the row roster from the alphabetical union of subjects present in either
+   group during weeks 1–6.
+5. Render both group panels against that same roster so a subject always occupies
+   the same row position in both panels.
+
 #### Colour encoding
-| `bounded_met` value | Colour |
+| Weekly status | Colour |
 |---|---|
-| `true` | `#3bbd8c` (green) |
-| `false` | `#f04545` (red) |
-| missing / no session | `#e5e5ed` (grey) |
+| `met` | `#3bbd8c` (green) |
+| `not_met` | `#f04545` (red) |
+| `no_data` | `#e5e5ed` (grey) |
 
 #### Labels
-- **Column headers** (`"W1"` … `"W6"`): centred above each column, `8px` font, `#80808f`,
-  `12px` above the first row
-- **Row labels** (subject IDs): right-aligned `60px` to the left of the grid, `8px` font,
-  vertically centred on each row
+- **Panel subtitles**: `"Supervised"` and `"Unsupervised"`, `8px` font,
+  `#80808f`, bold, aligned above the respective column headers
+- **Column headers** (`"W1"` … `"W6"`): centred above each column, `8px` font,
+  `#80808f`, `12px` above the first row in each panel
+- **Row labels** (subject IDs): right-aligned `60px` to the left of the left panel,
+  `8px` font, vertically centred on each row; labels apply to both panels because
+  the row roster is shared
 
 #### Sub-panel title
-`"Individual Adherence Heatmap (bounded_met per subject × week)"`, `9px`, `#80808f`,
-bold, `14px` above the column headers.
+`"Individual Weekly Adherence Heatmaps (75% threshold; aligned subjects)"`,
+`9px`, `#80808f`, bold, `14px` above the column headers.
 
 #### Legend (bottom of card)
 Three items horizontal, `4px` below the last heatmap row:
 1. Green square → `"Met"`
 2. Red square → `"Not Met"`
 3. Grey square → `"No Data"`
+
+#### Missing-data behavior
+- If a subject is present in Supervised data but absent from Unsupervised data,
+  the subject remains in the shared roster and the Unsupervised cells are rendered
+  as **No Data**
+- If a subject-week is missing within one panel, that week cell is rendered as
+  **No Data** rather than removing the week or shifting cells
+- If an entire group has no rows for a week, the column remains visible and all
+  affected cells are rendered as **No Data**
 
 ---
 
@@ -224,5 +256,6 @@ Three items horizontal, `4px` below the last heatmap row:
 - The SD band and line chart should use `clipPath` to prevent overflow beyond the
   chart area.
 - Recommend `d3.v7` (`import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm"`).
-- Load the CSV with `d3.csv("zone_out.csv", d3.autoType)` — `autoType` will correctly
-  parse `bounded_met` as a boolean and numeric columns as numbers.
+- Load the CSV with `d3.csv("zone_out.csv", d3.autoType)` or equivalent typed parsing.
+- Apply the 75% threshold only to Panel B; Panel A continues to use the session-level
+  `bounded_met` proportion per group-week for the line chart.

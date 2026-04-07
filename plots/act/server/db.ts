@@ -28,7 +28,8 @@ export async function query<T extends pg.QueryResultRow>(
 // ---------------------------------------------------------------------------
 
 // Wrap in subquery so ORDER BY can reference the CASE expression on day_type
-const PLOT1_SQL = (groupFilter: string) => `
+// sessionFilter: optional parameterized clause e.g. 'AND se.session_number = $1'
+const PLOT1_SQL = (groupFilter: string, sessionFilter: string) => `
   SELECT day_type, sleep_min, sed_min, light_min, mod_min, vig_min
   FROM (
     SELECT 'All Days' AS day_type,
@@ -40,7 +41,7 @@ const PLOT1_SQL = (groupFilter: string) => `
     FROM subjects s
     JOIN sessions se ON se.subject_id = s.subject_id
     JOIN session_days sd ON sd.session_id = se.session_id
-    WHERE ${groupFilter}
+    WHERE ${groupFilter} ${sessionFilter}
     UNION ALL
     SELECT
       CASE WHEN sd.weekday IN ('Saturday', 'Sunday') THEN 'Weekends' ELSE 'Weekdays' END,
@@ -52,7 +53,7 @@ const PLOT1_SQL = (groupFilter: string) => `
     FROM subjects s
     JOIN sessions se ON se.subject_id = s.subject_id
     JOIN session_days sd ON sd.session_id = se.session_id
-    WHERE ${groupFilter}
+    WHERE ${groupFilter} ${sessionFilter}
     GROUP BY 1
   ) sub
   ORDER BY
@@ -60,12 +61,16 @@ const PLOT1_SQL = (groupFilter: string) => `
 `;
 
 export async function plot1Query(
-  group: 'intervention' | 'observational'
+  group: 'intervention' | 'observational',
+  sessionNumber?: number
 ): Promise<DayTypeAggregate[]> {
   const filter =
     group === 'observational'
       ? "s.subject_code LIKE 'sub-7%'"
       : "s.subject_code NOT LIKE 'sub-7%'";
+
+  const sessionFilter = sessionNumber !== undefined ? 'AND se.session_number = $1' : '';
+  const params = sessionNumber !== undefined ? [sessionNumber] : [];
 
   const rows = await query<{
     day_type: string;
@@ -74,10 +79,10 @@ export async function plot1Query(
     light_min: string;
     mod_min: string;
     vig_min: string;
-  }>(PLOT1_SQL(filter));
+  }>(PLOT1_SQL(filter, sessionFilter), params);
 
   return rows.map((r) => ({
-    day_type: r.day_type,
+    day_type: r.day_type as 'All Days' | 'Weekdays' | 'Weekends',
     sleep_min: parseFloat(r.sleep_min),
     sed_min: parseFloat(r.sed_min),
     light_min: parseFloat(r.light_min),

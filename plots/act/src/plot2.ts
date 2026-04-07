@@ -73,6 +73,7 @@ export function renderPlot2(
   const data = [...rawData].sort((a, b) => computeDelta(a) - computeDelta(b));
 
   const g = svg.append('g').attr('transform', `translate(${layout.x},${layout.y})`);
+  g.attr('data-plot', '2');
 
   // Card background
   g.append('rect')
@@ -109,13 +110,14 @@ export function renderPlot2(
   );
   const maxDeltaAbs = Math.max(1, ...data.map((d) => Math.abs(computeDelta(d))));
 
+  // High-contrast scales: near-black low → vivid color high for dark-mode readability
   const sedScale = d3.scaleSequential(
     [d3.min(sedValues) ?? 0, d3.max(sedValues) ?? 1000],
-    d3.interpolate(COLORS.missing, COLORS.sedentary)
+    d3.interpolate('#0B1320', '#5B9EF5')
   );
   const mvpaScale = d3.scaleSequential(
     [d3.min(mvpaValues) ?? 0, d3.max(mvpaValues) ?? 200],
-    d3.interpolate(COLORS.missing, COLORS.intervention)
+    d3.interpolate('#0B1320', '#10D4E6')
   );
 
   // Session labels S1–S4
@@ -179,12 +181,13 @@ export function renderPlot2(
       const sx = (sn - 1) * CELL_W;
 
       // Sedentary cell
+      const missingColor = '#0B1320';
       const sedRect = g.append('rect')
         .attr('x', leftPanelX + sx)
         .attr('y', ry)
         .attr('width', CELL_W)
         .attr('height', CELL_H)
-        .attr('fill', session ? sedScale(session.avg_sed_min) : COLORS.missing);
+        .attr('fill', session ? sedScale(session.avg_sed_min) : missingColor);
       attachTooltip(sedRect, subject, sn, 'Sedentary', session?.avg_sed_min ?? null);
 
       // MVPA cell
@@ -193,7 +196,7 @@ export function renderPlot2(
         .attr('y', ry)
         .attr('width', CELL_W)
         .attr('height', CELL_H)
-        .attr('fill', session ? mvpaScale(session.avg_mvpa_min) : COLORS.missing);
+        .attr('fill', session ? mvpaScale(session.avg_mvpa_min) : missingColor);
       attachTooltip(mvpaRect, subject, sn, 'MVPA', session?.avg_mvpa_min ?? null);
     }
 
@@ -234,8 +237,8 @@ export function renderPlot2(
   const gradW = MAX_SESSIONS * CELL_W;
   const gradH = LEGEND_H;
 
-  renderGradientLegend(g, leftPanelX, legendTop, gradW, gradH, COLORS.missing, COLORS.sedentary, 'Sedentary');
-  renderGradientLegend(g, rightPanelX, legendTop, gradW, gradH, COLORS.missing, COLORS.intervention, 'MVPA');
+  renderGradientLegend(g, leftPanelX, legendTop, gradW, gradH, '#0B1320', '#5B9EF5', 'Sedentary');
+  renderGradientLegend(g, rightPanelX, legendTop, gradW, gradH, '#0B1320', '#10D4E6', 'MVPA');
 }
 
 function renderGradientLegend(

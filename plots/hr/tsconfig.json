@@ -7,10 +7,10 @@
     "noImplicitAny": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "dist/server",
+    "forceConsistentCasingInFileNames": true,
     "rootDir": ".",
-    "sourceMap": true
+    "outDir": "dist",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "include": ["server.ts", "server/**/*", "src/types.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["server/**/*.ts", "src/**/*.ts", "esbuild.config.ts"]
 }

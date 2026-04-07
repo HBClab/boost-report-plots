@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:client": "tsx esbuild.config.ts",
+    "build:client": "tsx esbuild.config.ts && node scripts/sync-hr-data.mjs",
     "build:server": "tsc --project tsconfig.server.json",
     "build": "npm run build:client && npm run build:server",
     "start": "tsx server/index.ts",
