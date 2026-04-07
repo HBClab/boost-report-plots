@@ -22,4 +22,8 @@ Thumbs.db
 node_modules/
 plots/act/public/bundle.js
 plots/act/public/bundle.js.map
+plots/hr/node_modules/
+plots/hr/public/bundle.js
+plots/hr/public/bundle.js.map
+plots/hr/dist/
 *.log
