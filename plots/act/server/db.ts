@@ -11,7 +11,15 @@ if (!dbUrl) {
   );
 }
 
-export const pool = new Pool({ connectionString: dbUrl });
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL === 'true';
+
+export const pool = new Pool({
+  connectionString: dbUrl,
+  // Serverless runtimes should keep per-instance connection counts low.
+  max: isVercel ? 1 : 10,
+  idleTimeoutMillis: 5_000,
+  connectionTimeoutMillis: 10_000,
+});
 
 // Generic query helper
 export async function query<T extends pg.QueryResultRow>(

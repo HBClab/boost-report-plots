@@ -312,14 +312,29 @@ async function main(): Promise<void> {
   let plot2Resp:   Plot2ApiResponse;
   let plot3Resp:   Plot3ApiResponse;
 
+  async function fetchJsonOrThrow<T>(url: string): Promise<T> {
+    const response = await fetch(url);
+    const text = await response.text();
+
+    if (!response.ok) {
+      throw new Error(`${url} -> ${response.status} ${response.statusText}: ${text}`);
+    }
+
+    try {
+      return JSON.parse(text) as T;
+    } catch (error) {
+      throw new Error(`${url} returned invalid JSON: ${text.slice(0, 200)}`);
+    }
+  }
+
   try {
     [intAllResp, obsAllResp, intBaseResp, obsBaseResp, plot2Resp, plot3Resp] = await Promise.all([
-      fetch('/api/plot1/intervention').then(r => r.json())           as Promise<Plot1ApiResponse>,
-      fetch('/api/plot1/observational').then(r => r.json())          as Promise<Plot1ApiResponse>,
-      fetch('/api/plot1/intervention?session=1').then(r => r.json()) as Promise<Plot1ApiResponse>,
-      fetch('/api/plot1/observational?session=1').then(r => r.json()) as Promise<Plot1ApiResponse>,
-      fetch('/api/plot2').then(r => r.json())                        as Promise<Plot2ApiResponse>,
-      fetch('/api/plot3').then(r => r.json())                        as Promise<Plot3ApiResponse>,
+      fetchJsonOrThrow<Plot1ApiResponse>('/api/plot1/intervention'),
+      fetchJsonOrThrow<Plot1ApiResponse>('/api/plot1/observational'),
+      fetchJsonOrThrow<Plot1ApiResponse>('/api/plot1/intervention?session=1'),
+      fetchJsonOrThrow<Plot1ApiResponse>('/api/plot1/observational?session=1'),
+      fetchJsonOrThrow<Plot2ApiResponse>('/api/plot2'),
+      fetchJsonOrThrow<Plot3ApiResponse>('/api/plot3'),
     ]);
   } catch (err) {
     svg.append('text')
