@@ -8,7 +8,7 @@ import { renderHrPlot1 } from './hr-plot1.js';
 import { renderHrAdherenceTrend, renderHrHeatmapCard, getHrHeatmapCardHeight } from './hr-plot2.js';
 import { buildHrDashboardData } from './hr-transforms.js';
 import type { Plot1ApiResponse, Plot2ApiResponse, Plot3ApiResponse, DayTypeAggregate } from './types.js';
-import type { HrDashboardData } from './hr-types.js';
+import type { HrDashboardData, HrHeatmapView } from './hr-types.js';
 
 // ─── Canvas & layout ─────────────────────────────────────────────────────────
 const CANVAS_W = 1440;
@@ -72,6 +72,7 @@ function buildZoomSpec(
     plot3Resp: Plot3ApiResponse;
   },
   getSessionView: () => SessionView,
+  getHrHeatmapView: () => HrHeatmapView,
   hrData: HrDashboardData | null
 ): ZoomSpec | null {
   switch (zoomId) {
@@ -81,13 +82,16 @@ function buildZoomSpec(
         height: ACT_LAYOUTS.plot1.h,
         allowScroll: false,
         render: (svg) => {
-          const sessionView = getSessionView();
-          const intData = sessionView === 'all' ? actData.intAll : actData.intBase;
-          const obsData = sessionView === 'all' ? actData.obsAll : actData.obsBase;
-          renderPlot1(svg, intData, obsData, { x: 0, y: 0, w: ACT_LAYOUTS.plot1.w, h: ACT_LAYOUTS.plot1.h }, {
-            current: sessionView,
-            onToggle: () => {},
-          });
+          let modalView = getSessionView();
+          function renderModal(): void {
+            const intData = modalView === 'all' ? actData.intAll : actData.intBase;
+            const obsData = modalView === 'all' ? actData.obsAll : actData.obsBase;
+            renderPlot1(svg, intData, obsData, { x: 0, y: 0, w: ACT_LAYOUTS.plot1.w, h: ACT_LAYOUTS.plot1.h }, {
+              current: modalView,
+              onToggle: (v) => { modalView = v; renderModal(); },
+            });
+          }
+          renderModal();
         },
       };
     case 'plot2': {
@@ -138,7 +142,14 @@ function buildZoomSpec(
         allowScroll: true,
         render: (svg) => {
           const height = getHrHeatmapCardHeight(hrData.roster.length);
-          renderHrHeatmapCard(svg, hrData.subjectSummaries, hrData.roster, { x: 0, y: 0, w: HR_LAYOUTS.heatmap.w, h: height });
+          let modalView = getHrHeatmapView();
+          function renderModal(): void {
+            renderHrHeatmapCard(svg, hrData!.subjectSummaries, hrData!.roster,
+              { x: 0, y: 0, w: HR_LAYOUTS.heatmap.w, h: height },
+              { view: modalView, onToggle: (v) => { modalView = v; renderModal(); } }
+            );
+          }
+          renderModal();
         },
       };
     default:
@@ -247,7 +258,8 @@ let hrCache: HrDashboardData | null = null;
 async function renderHrView(
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
   bgRect: d3.Selection<SVGRectElement, unknown, null, undefined>,
-  onOpenZoom: (zoomId: ZoomPlotId) => void
+  onOpenZoom: (zoomId: ZoomPlotId) => void,
+  onHeatmapViewChange: (v: HrHeatmapView) => void
 ): Promise<void> {
   // Clear all plots from previous view
   svg.selectAll('[data-plot]').remove();
@@ -285,7 +297,21 @@ async function renderHrView(
 
   renderHrPlot1(svg, data.zoneSummaries, HR_LAYOUTS.plot1);
   renderHrAdherenceTrend(svg, data.adherenceSummaries, HR_LAYOUTS.trend);
-  renderHrHeatmapCard(svg, data.subjectSummaries, data.roster, hrHeatmapLayout);
+
+  let hrHeatmapView: HrHeatmapView = 'adherence';
+
+  function renderHrHeatmapSection(): void {
+    renderHrHeatmapCard(svg, data.subjectSummaries, data.roster, hrHeatmapLayout, {
+      view: hrHeatmapView,
+      onToggle: (v) => {
+        hrHeatmapView = v;
+        onHeatmapViewChange(v);
+        renderHrHeatmapSection();
+        addZoomButton(svg, hrHeatmapLayout, 'hr-heatmap', onOpenZoom);
+      },
+    });
+  }
+  renderHrHeatmapSection();
 
   addZoomButton(svg, HR_LAYOUTS.plot1, 'hr-plot1', onOpenZoom);
   addZoomButton(svg, HR_LAYOUTS.trend,  'hr-trend', onOpenZoom);
@@ -355,9 +381,10 @@ async function main(): Promise<void> {
   type DashView = 'act' | 'hr';
   let dashView: DashView = 'act';
   let currentActSessionView: SessionView = 'all';
+  let currentHrHeatmapView: HrHeatmapView = 'adherence';
 
   function handleOpenZoom(zoomId: ZoomPlotId): void {
-    const spec = buildZoomSpec(zoomId, actData, () => currentActSessionView, hrCache);
+    const spec = buildZoomSpec(zoomId, actData, () => currentActSessionView, () => currentHrHeatmapView, hrCache);
     if (spec) openZoomModal(spec);
   }
 
@@ -376,7 +403,7 @@ async function main(): Promise<void> {
         currentActSessionView = nextView;
       });
     } else {
-      await renderHrView(svg, bgRect, handleOpenZoom);
+      await renderHrView(svg, bgRect, handleOpenZoom, (v) => { currentHrHeatmapView = v; });
     }
   }
 
