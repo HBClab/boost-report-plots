@@ -3,6 +3,7 @@
 
 export type HrGroupName = 'Supervised' | 'Unsupervised';
 export type HrHeatmapStatus = 'met' | 'not_met' | 'no_data';
+export type HrHeatmapView = 'adherence' | 'sessions';
 
 export interface HrSessionRow {
   group: HrGroupName;
