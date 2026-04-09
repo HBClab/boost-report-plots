@@ -1,13 +1,12 @@
-// HR Plot 2 — Adherence Trend + Individual Heatmap (dark-themed)
+// HR Plot 2 — Intensity Trend + Individual Heatmap (dark-themed)
 // Adapted from plots/hr/src/plot2.ts
 import * as d3 from 'd3';
 import type { CardLayout } from './types.js';
 import type {
   HrAlignedSubjectRosterEntry,
   HrGroupName,
-  HrHeatmapStatus,
   HrHeatmapView,
-  HrWeeklyGroupAdherenceSummary,
+  HrWeeklyGroupIntensitySummary,
   HrWeeklySubjectAdherenceSummary,
 } from './hr-types.js';
 
@@ -56,6 +55,46 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
+function getSummaryExtent(
+  summaries: HrWeeklyGroupIntensitySummary[],
+  fallback: [number, number],
+  opts: { min?: number; max?: number; minSpan?: number; padRatio?: number } = {}
+): [number, number] {
+  const values = summaries.flatMap((summary) =>
+    [summary.lowerBound, summary.upperBound, summary.groupMean].filter((value): value is number => value != null)
+  );
+  if (values.length === 0) return fallback;
+
+  let minValue = d3.min(values) ?? fallback[0];
+  let maxValue = d3.max(values) ?? fallback[1];
+  const span = maxValue - minValue;
+  const minSpan = opts.minSpan ?? 1;
+  const padRatio = opts.padRatio ?? 0.08;
+  const padding = Math.max(span * padRatio, minSpan / 2);
+
+  minValue -= padding;
+  maxValue += padding;
+
+  if (opts.min != null) minValue = Math.max(opts.min, minValue);
+  if (opts.max != null) maxValue = Math.min(opts.max, maxValue);
+
+  if (maxValue - minValue < minSpan) {
+    const mid = (minValue + maxValue) / 2;
+    minValue = mid - minSpan / 2;
+    maxValue = mid + minSpan / 2;
+    if (opts.min != null && minValue < opts.min) {
+      minValue = opts.min;
+      maxValue = Math.max(maxValue, minValue + minSpan);
+    }
+    if (opts.max != null && maxValue > opts.max) {
+      maxValue = opts.max;
+      minValue = Math.min(minValue, maxValue - minSpan);
+    }
+  }
+
+  return [minValue, maxValue];
+}
+
 // ─── Heatmap view toggle constants ───────────────────────────────────────────
 const TOGGLE_BTN_W   = 110;
 const TOGGLE_BTN_H   = 24;
@@ -63,12 +102,15 @@ const TOGGLE_PAD     = 2;
 const TOGGLE_TOTAL_W = 2 * TOGGLE_BTN_W + TOGGLE_PAD * 3;
 const CARD_PAD       = 16;
 
-// ─── Adherence Trend ─────────────────────────────────────────────────────────
-export function renderHrAdherenceTrend(
+// ─── Intensity Trend ─────────────────────────────────────────────────────────
+export function renderHrIntensityTrend(
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
-  data: HrWeeklyGroupAdherenceSummary[],
+  trimpSummaries: HrWeeklyGroupIntensitySummary[],
+  hrMaxSummaries: HrWeeklyGroupIntensitySummary[],
   layout: CardLayout
 ): void {
+  type TrendView = 'trimp' | 'hrmax';
+
   svg.selectAll('[data-plot="hr2"]').remove();
   const card = svg.append('g')
     .attr('data-plot', 'hr2')
@@ -78,69 +120,147 @@ export function renderHrAdherenceTrend(
     .attr('width', layout.w).attr('height', layout.h)
     .attr('rx', 12).attr('fill', C.card);
 
-  const margins = { top: 62, right: 24, bottom: 28, left: 70 };
+  const margins = { top: 84, right: 24, bottom: 28, left: 70 };
   const innerW = layout.w - margins.left - margins.right;
   const innerH = layout.h - margins.top - margins.bottom;
 
-  card.append('text').attr('x', margins.left).attr('y', 26)
+  const btnW = 84;
+  const btnH = 24;
+  const btnGap = 2;
+  const containerPad = 2;
+  const containerW = btnW * 2 + btnGap + containerPad * 2;
+  const containerH = btnH + containerPad * 2;
+  const toggleX = layout.w - CARD_PAD - containerW;
+  const toggleY = 8;
+
+  const toggleG = card.append('g').attr('transform', `translate(${toggleX}, ${toggleY})`);
+  toggleG.append('rect')
+    .attr('width', containerW)
+    .attr('height', containerH)
+    .attr('rx', 6)
+    .attr('fill', C.card)
+    .attr('stroke', C.grid)
+    .attr('stroke-width', 1);
+
+  const trimpBtnG = toggleG.append('g')
+    .attr('transform', `translate(${containerPad}, ${containerPad})`)
+    .style('cursor', 'pointer');
+  const trimpBtnRect = trimpBtnG.append('rect')
+    .attr('width', btnW)
+    .attr('height', btnH)
+    .attr('rx', 4)
+    .attr('fill', '#1A2440');
+  const trimpBtnText = trimpBtnG.append('text')
+    .attr('x', btnW / 2)
+    .attr('y', btnH / 2 + 4)
+    .attr('text-anchor', 'middle')
+    .attr('font-size', 10)
+    .attr('font-weight', 600)
+    .attr('fill', C.textPrimary)
+    .attr('font-family', C.font)
+    .attr('pointer-events', 'none')
+    .text('TRIMP');
+
+  const hrMaxBtnG = toggleG.append('g')
+    .attr('transform', `translate(${containerPad + btnW + btnGap}, ${containerPad})`)
+    .style('cursor', 'pointer');
+  const hrMaxBtnRect = hrMaxBtnG.append('rect')
+    .attr('width', btnW)
+    .attr('height', btnH)
+    .attr('rx', 4)
+    .attr('fill', 'transparent');
+  const hrMaxBtnText = hrMaxBtnG.append('text')
+    .attr('x', btnW / 2)
+    .attr('y', btnH / 2 + 4)
+    .attr('text-anchor', 'middle')
+    .attr('font-size', 10)
+    .attr('font-weight', 600)
+    .attr('fill', C.textSecondary)
+    .attr('font-family', C.font)
+    .attr('pointer-events', 'none')
+    .text('% HR Max');
+
+  const trimpTitleG = card.append('g');
+  trimpTitleG.append('text').attr('x', margins.left).attr('y', 26)
     .attr('fill', C.textPrimary).attr('font-size', 14).attr('font-weight', 600)
     .attr('font-family', C.font).attr('letter-spacing', '-0.01em')
-    .text('HR Zone Adherence Rate by Week');
-  card.append('text').attr('x', margins.left).attr('y', 44)
+    .text('Weekly TRIMP by Group');
+  trimpTitleG.append('text').attr('x', margins.left).attr('y', 44)
     .attr('fill', C.textSecondary).attr('font-size', 11).attr('font-family', C.font)
-    .text('Weekly session adherence · ±1 SD subject-level variability');
+    .text('Subject-level weekly mean per session · shaded band = ±1 SD');
 
-  const g = card.append('g').attr('transform', `translate(${margins.left},${margins.top})`);
-  const x = d3.scalePoint<number>().domain([1, 2, 3, 4, 5, 6]).range([0, innerW]).padding(0.1);
-  const y = d3.scaleLinear().domain([0, 1]).range([innerH, 0]);
+  const hrMaxTitleG = card.append('g');
+  hrMaxTitleG.append('text').attr('x', margins.left).attr('y', 26)
+    .attr('fill', C.textPrimary).attr('font-size', 14).attr('font-weight', 600)
+    .attr('font-family', C.font).attr('letter-spacing', '-0.01em')
+    .text('Weekly % HR Max by Group');
+  hrMaxTitleG.append('text').attr('x', margins.left).attr('y', 44)
+    .attr('fill', C.textSecondary).attr('font-size', 11).attr('font-family', C.font)
+    .text('Subject-level weekly mean per session · shaded band = ±1 SD');
 
-  // Gridlines
-  g.selectAll('line.grid').data([0, 0.25, 0.5, 0.75, 1]).enter().append('line')
-    .attr('x1', 0).attr('x2', innerW)
-    .attr('y1', (v: number) => y(v)).attr('y2', (v: number) => y(v))
-    .attr('stroke', C.grid).attr('stroke-width', 1);
+  const legend = card.append('g').attr('transform', `translate(${layout.w - CARD_PAD - 118},56)`);
+  [{ label: 'Supervised', color: C.supervised }, { label: 'Unsupervised', color: C.unsupervised }]
+    .forEach((item, i) => {
+      const lg = legend.append('g').attr('transform', `translate(0,${i * 18})`);
+      lg.append('rect').attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', item.color);
+      lg.append('text').attr('x', 15).attr('y', 9).attr('font-size', 10)
+        .attr('fill', C.textSecondary).attr('font-family', C.font).text(item.label);
+    });
 
-  // Y-axis labels
-  g.selectAll('text.y-tick').data([0, 0.25, 0.5, 0.75, 1]).enter().append('text')
-    .attr('x', -8).attr('y', (v: number) => y(v) + 4)
-    .attr('text-anchor', 'end').attr('font-size', 10)
-    .attr('fill', C.textSecondary).attr('font-family', C.fontMono)
-    .text((v: number) => `${Math.round(v * 100)}%`);
-
-  const area = d3.area<HrWeeklyGroupAdherenceSummary>()
-    .defined((d) => d.lowerBound != null && d.upperBound != null)
-    .x((d) => x(d.week) ?? 0)
-    .y0((d) => y(d.lowerBound ?? 0))
-    .y1((d) => y(d.upperBound ?? 0));
-  const line = d3.line<HrWeeklyGroupAdherenceSummary>()
-    .defined((d) => d.adherenceRate != null)
-    .x((d) => x(d.week) ?? 0)
-    .y((d) => y(d.adherenceRate ?? 0));
+  const clipId = `intensity-clip-${Math.random().toString(36).slice(2, 9)}`;
+  card.append('defs')
+    .append('clipPath')
+    .attr('id', clipId)
+    .append('rect')
+    .attr('width', innerW)
+    .attr('height', innerH);
 
   const tooltip = ensureTooltip();
 
+  const trimpChartG = card.append('g').attr('transform', `translate(${margins.left},${margins.top})`);
+  const trimpDomain = getSummaryExtent(trimpSummaries, [0, 8000], { min: 0, minSpan: 500, padRatio: 0.1 });
+  const trimpX = d3.scalePoint<number>().domain([1, 2, 3, 4, 5, 6]).range([0, innerW]).padding(0.1);
+  const trimpY = d3.scaleLinear().domain(trimpDomain).nice(5).range([innerH, 0]);
+  const trimpTicks = trimpY.ticks(5);
+  trimpChartG.selectAll('line.grid').data(trimpTicks).enter().append('line')
+    .attr('x1', 0).attr('x2', innerW)
+    .attr('y1', (v) => trimpY(v)).attr('y2', (v) => trimpY(v))
+    .attr('stroke', C.grid).attr('stroke-width', 1);
+  trimpChartG.selectAll('text.y-tick').data(trimpTicks).enter().append('text')
+    .attr('x', -8).attr('y', (v) => trimpY(v) + 3)
+    .attr('text-anchor', 'end').attr('font-size', 10)
+    .attr('fill', C.textSecondary).attr('font-family', C.fontMono)
+    .text((v) => d3.format(',.0f')(v));
+  const trimpClipG = trimpChartG.append('g').attr('clip-path', `url(#${clipId})`);
+  const trimpArea = d3.area<HrWeeklyGroupIntensitySummary>()
+    .defined((s) => s.lowerBound != null && s.upperBound != null)
+    .x((s) => trimpX(s.week) ?? 0)
+    .y0((s) => trimpY(s.lowerBound ?? 0))
+    .y1((s) => trimpY(s.upperBound ?? 0));
+  const trimpLine = d3.line<HrWeeklyGroupIntensitySummary>()
+    .defined((s) => s.groupMean != null)
+    .x((s) => trimpX(s.week) ?? 0)
+    .y((s) => trimpY(s.groupMean ?? 0));
+
   (['Supervised', 'Unsupervised'] as HrGroupName[]).forEach((group) => {
-    const summaries = data.filter((d) => d.group === group);
+    const summaries = trimpSummaries.filter((d) => d.group === group);
     const color = group === 'Supervised' ? C.supervised : C.unsupervised;
-
-    g.append('path').datum(summaries)
-      .attr('fill', color).attr('opacity', 0.12).attr('pointer-events', 'none').attr('d', area);
-    g.append('path').datum(summaries)
-      .attr('fill', 'none').attr('stroke', color).attr('stroke-width', 2.5).attr('pointer-events', 'none').attr('d', line);
-
-    g.selectAll(`circle.${group}`)
-      .data(summaries.filter((d) => d.adherenceRate != null))
+    trimpClipG.append('path').datum(summaries)
+      .attr('fill', color).attr('opacity', 0.12).attr('pointer-events', 'none').attr('d', trimpArea);
+    trimpClipG.append('path').datum(summaries)
+      .attr('fill', 'none').attr('stroke', color).attr('stroke-width', 2.5).attr('pointer-events', 'none').attr('d', trimpLine);
+    trimpChartG.selectAll(`circle.trimp-${group}`)
+      .data(summaries.filter((d) => d.groupMean != null))
       .enter().append('circle')
-      .attr('cx', (d) => x(d.week) ?? 0)
-      .attr('cy', (d) => y(d.adherenceRate ?? 0))
+      .attr('cx', (d) => trimpX(d.week) ?? 0)
+      .attr('cy', (d) => trimpY(d.groupMean ?? 0))
       .attr('r', 5).attr('fill', color)
       .on('mouseover', (event: MouseEvent, d) => {
-        const pctStr = `${((d.adherenceRate ?? 0) * 100).toFixed(1)}%`;
-        const sdStr = d.subjectRateSd != null ? ` ±${(d.subjectRateSd * 100).toFixed(1)}%` : '';
+        const sdStr = d.groupSd != null ? ` ±${Math.round(d.groupSd)}` : '';
         tooltip.html(
           `<strong style="color:${color}">${group}</strong> · Wk ${d.week}<br>` +
-          `Adherence: <strong>${pctStr}${sdStr}</strong><br>` +
-          `<span style="color:#6B7A90">${d.totalSessions} sessions</span>`
+          `Mean TRIMP: <strong>${Math.round(d.groupMean ?? 0)}${sdStr}</strong><br>` +
+          `<span style="color:#6B7A90">${d.subjectCount} subjects · ${d.sessionCount} sessions</span>`
         ).style('opacity', '1')
           .style('left', `${event.clientX + 14}px`)
           .style('top', `${event.clientY - 10}px`);
@@ -151,22 +271,87 @@ export function renderHrAdherenceTrend(
       .on('mouseout', () => tooltip.style('opacity', '0'));
   });
 
-  // X-axis labels
-  g.selectAll('text.x-tick').data([1, 2, 3, 4, 5, 6]).enter().append('text')
-    .attr('x', (w: number) => x(w) ?? 0).attr('y', innerH + 18)
+  trimpChartG.selectAll('text.x-tick').data([1, 2, 3, 4, 5, 6]).enter().append('text')
+    .attr('x', (w) => trimpX(w) ?? 0).attr('y', innerH + 18)
     .attr('text-anchor', 'middle').attr('font-size', 10)
     .attr('fill', C.textSecondary).attr('font-family', C.fontMono)
-    .text((w: number) => `Wk ${w}`);
+    .text((w) => `Wk ${w}`);
 
-  // Legend top-right
-  const legend = card.append('g').attr('transform', `translate(${layout.w - 130},18)`);
-  [{ label: 'Supervised', color: C.supervised }, { label: 'Unsupervised', color: C.unsupervised }]
-    .forEach((item, i) => {
-      const lg = legend.append('g').attr('transform', `translate(0,${i * 20})`);
-      lg.append('rect').attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', item.color);
-      lg.append('text').attr('x', 15).attr('y', 9).attr('font-size', 11)
-        .attr('fill', C.textSecondary).attr('font-family', C.font).text(item.label);
-    });
+  const hrMaxChartG = card.append('g').attr('transform', `translate(${margins.left},${margins.top})`);
+  const hrMaxDomain = getSummaryExtent(hrMaxSummaries, [0.5, 0.8], { min: 0, max: 1, minSpan: 0.08, padRatio: 0.1 });
+  const hrMaxX = d3.scalePoint<number>().domain([1, 2, 3, 4, 5, 6]).range([0, innerW]).padding(0.1);
+  const hrMaxY = d3.scaleLinear().domain(hrMaxDomain).nice(5).range([innerH, 0]);
+  const hrMaxTicks = hrMaxY.ticks(5);
+  hrMaxChartG.selectAll('line.grid').data(hrMaxTicks).enter().append('line')
+    .attr('x1', 0).attr('x2', innerW)
+    .attr('y1', (v) => hrMaxY(v)).attr('y2', (v) => hrMaxY(v))
+    .attr('stroke', C.grid).attr('stroke-width', 1);
+  hrMaxChartG.selectAll('text.y-tick').data(hrMaxTicks).enter().append('text')
+    .attr('x', -8).attr('y', (v) => hrMaxY(v) + 3)
+    .attr('text-anchor', 'end').attr('font-size', 10)
+    .attr('fill', C.textSecondary).attr('font-family', C.fontMono)
+    .text((v) => `${Math.round(v * 100)}%`);
+  const hrMaxClipG = hrMaxChartG.append('g').attr('clip-path', `url(#${clipId})`);
+  const hrMaxArea = d3.area<HrWeeklyGroupIntensitySummary>()
+    .defined((s) => s.lowerBound != null && s.upperBound != null)
+    .x((s) => hrMaxX(s.week) ?? 0)
+    .y0((s) => hrMaxY(s.lowerBound ?? 0.5))
+    .y1((s) => hrMaxY(s.upperBound ?? 0.5));
+  const hrMaxLine = d3.line<HrWeeklyGroupIntensitySummary>()
+    .defined((s) => s.groupMean != null)
+    .x((s) => hrMaxX(s.week) ?? 0)
+    .y((s) => hrMaxY(s.groupMean ?? 0.5));
+
+  (['Supervised', 'Unsupervised'] as HrGroupName[]).forEach((group) => {
+    const summaries = hrMaxSummaries.filter((d) => d.group === group);
+    const color = group === 'Supervised' ? C.supervised : C.unsupervised;
+    hrMaxClipG.append('path').datum(summaries)
+      .attr('fill', color).attr('opacity', 0.12).attr('pointer-events', 'none').attr('d', hrMaxArea);
+    hrMaxClipG.append('path').datum(summaries)
+      .attr('fill', 'none').attr('stroke', color).attr('stroke-width', 2.5).attr('pointer-events', 'none').attr('d', hrMaxLine);
+    hrMaxChartG.selectAll(`circle.hrmax-${group}`)
+      .data(summaries.filter((d) => d.groupMean != null))
+      .enter().append('circle')
+      .attr('cx', (d) => hrMaxX(d.week) ?? 0)
+      .attr('cy', (d) => hrMaxY(d.groupMean ?? 0.5))
+      .attr('r', 5).attr('fill', color)
+      .on('mouseover', (event: MouseEvent, d) => {
+        const meanPct = `${((d.groupMean ?? 0) * 100).toFixed(1)}%`;
+        const sdStr = d.groupSd != null ? ` ±${(d.groupSd * 100).toFixed(1)}%` : '';
+        tooltip.html(
+          `<strong style="color:${color}">${group}</strong> · Wk ${d.week}<br>` +
+          `Mean % HR Max: <strong>${meanPct}${sdStr}</strong><br>` +
+          `<span style="color:#6B7A90">${d.subjectCount} subjects · ${d.sessionCount} sessions</span>`
+        ).style('opacity', '1')
+          .style('left', `${event.clientX + 14}px`)
+          .style('top', `${event.clientY - 10}px`);
+      })
+      .on('mousemove', (event: MouseEvent) => {
+        tooltip.style('left', `${event.clientX + 14}px`).style('top', `${event.clientY - 10}px`);
+      })
+      .on('mouseout', () => tooltip.style('opacity', '0'));
+  });
+
+  hrMaxChartG.selectAll('text.x-tick').data([1, 2, 3, 4, 5, 6]).enter().append('text')
+    .attr('x', (w) => hrMaxX(w) ?? 0).attr('y', innerH + 18)
+    .attr('text-anchor', 'middle').attr('font-size', 10)
+    .attr('fill', C.textSecondary).attr('font-family', C.fontMono)
+    .text((w) => `Wk ${w}`);
+
+  function updateView(view: TrendView): void {
+    trimpTitleG.attr('display', view === 'trimp' ? null : 'none');
+    hrMaxTitleG.attr('display', view === 'hrmax' ? null : 'none');
+    trimpChartG.attr('display', view === 'trimp' ? null : 'none');
+    hrMaxChartG.attr('display', view === 'hrmax' ? null : 'none');
+    trimpBtnRect.attr('fill', view === 'trimp' ? '#1A2440' : 'transparent');
+    trimpBtnText.attr('fill', view === 'trimp' ? C.textPrimary : C.textSecondary);
+    hrMaxBtnRect.attr('fill', view === 'hrmax' ? '#1A2440' : 'transparent');
+    hrMaxBtnText.attr('fill', view === 'hrmax' ? C.textPrimary : C.textSecondary);
+  }
+
+  updateView('trimp');
+  trimpBtnG.on('click', () => updateView('trimp'));
+  hrMaxBtnG.on('click', () => updateView('hrmax'));
 }
 
 // ─── Individual Adherence Heatmap ────────────────────────────────────────────
