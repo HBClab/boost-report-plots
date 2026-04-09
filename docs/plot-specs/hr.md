@@ -116,76 +116,213 @@ by text `12px` to the right. Items spaced `90px` apart horizontally.
 
 ---
 
-## Plot 2 — bounded_met Adherence Rate Over Weeks
+## Plot 2 — Session Intensity Trend Card
 
 ### What it shows
-This card contains **two stacked panels**:
-1. **(Top) Line chart** — the proportion of sessions per week where `bounded_met == true`,
-   for each group, with a shaded ±1 SD confidence band.
-2. **(Bottom) Aligned dual heatmap** — weekly subject adherence across all 6 weeks,
-   rendered as side-by-side Supervised and Unsupervised panels that share the same
-   subject roster and row order.
+This card replaces the adherence line chart with a **single-chart card that supports two views**
+using the same inline two-button toggle pattern already used elsewhere in the dashboard.
+
+Available views:
+1. **TRIMP** — weekly Edwards TRIMP comparison between Supervised and Unsupervised
+2. **% HR Max** — weekly mean percent HR max comparison between Supervised and Unsupervised
+
+Only one view is visible at a time. The card body, axes, legend placement, colours, and
+overall geometry stay fixed while the metric-specific title, subtitle, y-scale, and tooltip
+content update when the toggle changes.
+
+### Source fields and naming
+- `edwards_trimp` in `zone_out.csv` is the source for the **TRIMP** view
+- `mean_hr_pct_max` in `zone_out.csv` is the source for the **% HR Max** view
+- In UI copy, use reader-friendly labels:
+  - `"TRIMP"` for `edwards_trimp`
+  - `"% HR Max"` for `mean_hr_pct_max`
+
+### Time-point handling
+- The CSV contains Supervised weeks `1–6` and Unsupervised weeks `7–12`
+- For this card, normalise each group to a shared displayed time axis of `Wk 1` to `Wk 6`
+  so the two groups can be compared at matched time points
+- Preserve the original row ordering only for aggregation; do not display `Wk 7–Wk 12`
 
 ### Card dimensions
 - Position: `x: 723, y: 40`
-- Width: `660px`, Height: `501px`
+- Width: `660px`, Height: `390px`
 
-### Chart area margins (shared left/right)
+### Interaction model
+- Top-right inline toggle inside the card header, matching the existing two-option slider/button logic
+- Two options:
+  - `"TRIMP"`
+  - `"% HR Max"`
+- Default view: `"TRIMP"`
+- Toggle container styling should match the other dashboard cards that already expose two views:
+  rounded outer container, two pill-like buttons, active state fill, inactive hover state
+
+### Chart area margins
 - Left: `70px`
 - Right: `20px`
-- Top (line chart): `60px`
-- The line chart occupies the top **~62%** of the inner height
-- The heatmap occupies the lower **~38%**, with a `36px` gap below the line chart's x-axis
+- Top: `60px`
+- Bottom: `28px`
+
+### Shared chart form
+Both views use the same visual grammar:
+- one `d3.line()` per group
+- one `d3.area()` SD band per group
+- one `r = 5px` point marker per week
+- x-axis as matched weeks `Wk 1` … `Wk 6`
+- legend in the top-right of the card body
+- supervised in blue, unsupervised in orange
+
+This should feel like the old adherence trend card, but with the metric swapped.
 
 ---
 
-### Panel A — Line Chart
+### View A — TRIMP
+
+#### What it shows
+Mean weekly training impulse per session for Supervised vs Unsupervised, with a shaded
+±1 SD band computed from subject-level weekly means.
 
 #### Data preparation
-Group `zone_out.csv` by `(group, week, subject)`. For each `(group, week)`:
-1. Count sessions where `bounded_met == true` divided by total sessions → **adherence rate**
-2. Compute standard deviation of per-subject adherence rates → **SD band**
+1. Filter to valid rows with non-empty `edwards_trimp`
+2. Map each row onto a display week from `1–6` within its group
+3. For each `(group, display_week, subject)`, compute the subject's weekly mean `edwards_trimp`
+4. For each `(group, display_week)`:
+   - `group_mean = mean(subject_weekly_means)` for the plotted line
+   - `group_sd = sample_sd(subject_weekly_means)` for the shaded band
+   - `session_count = count(rows)` for tooltip context
+   - `subject_count = count(distinct subject)` for tooltip context
+
+#### Observed data range in `zone_out.csv`
+- Overall range: `0` to `14676`
+- Group-week means run approximately `4901` to `6949`
 
 #### Scales
-- **x**: `scalePoint` over weeks 1–6, range `[0, lineChartWidth]`, padding `0.1`
-- **y**: linear, domain `[0, 1]`, range `[lineChartHeight, 0]`
+- **x**: `scalePoint` over `[1, 2, 3, 4, 5, 6]`, range `[0, innerWidth]`, padding `0.1`
+- **y**: linear, domain from `0` to a rounded headroom above the maximum `group_mean + group_sd`
+- Recommended tick marks: every `2000` units when space permits
+- y-axis labels should render as integers, no decimals
 
 #### SD band
-Render as a `d3.area()` path for each group:
-- `y0 = rate - sd`, `y1 = rate + sd`, clipped to `[0, 1]`
-- Fill: group colour at **15% opacity**
-- No stroke on the band
+- `y0 = max(0, group_mean - group_sd)`
+- `y1 = group_mean + group_sd`
+- Fill with the corresponding group colour at `15% opacity`
 
-#### Lines
-One `d3.line()` path per group, `stroke-width: 2.5px`, no fill.
+#### Title block
+- Title: `"Weekly TRIMP by Group"`
+- Subtitle: `"Subject-level weekly mean per session · shaded band = ±1 SD"`
+
+#### Tooltip
+On point hover, show:
+- group
+- displayed week
+- mean TRIMP for that group-week
+- SD if available
+- number of sessions contributing
+- number of subjects contributing
+
+Example copy:
+`Supervised · Wk 3`
+`Mean TRIMP: 5373`
+`SD: 1637`
+`201 sessions · 49 subjects`
+
+---
+
+### View B — % HR Max
+
+#### What it shows
+Mean weekly session intensity as percent of maximum heart rate for Supervised vs Unsupervised,
+with a shaded ±1 SD band computed from subject-level weekly means.
+
+#### Data preparation
+1. Filter to valid rows with non-empty `mean_hr_pct_max`
+2. Map each row onto a display week from `1–6` within its group
+3. For each `(group, display_week, subject)`, compute the subject's weekly mean `mean_hr_pct_max`
+4. For each `(group, display_week)`:
+   - `group_mean = mean(subject_weekly_means)` for the plotted line
+   - `group_sd = sample_sd(subject_weekly_means)` for the shaded band
+   - `session_count = count(rows)` for tooltip context
+   - `subject_count = count(distinct subject)` for tooltip context
+
+#### Observed data range in `zone_out.csv`
+- Overall range: `0.325` to `0.935`
+- Group-week means run approximately `0.638` to `0.686`
+
+#### Scales
+- **x**: `scalePoint` over `[1, 2, 3, 4, 5, 6]`, range `[0, innerWidth]`, padding `0.1`
+- **y**: linear, fixed domain `[0.50, 0.80]`
+- Render y-axis labels as percentages: `"50%"`, `"60%"`, `"70%"`, `"80%"`
+- Clip SD bands to the y-domain
+
+The fixed percent domain is intentional. It avoids the visual instability of autoscaling and
+keeps group differences readable given the observed weekly means cluster between roughly 64% and 69%.
+
+#### SD band
+- `y0 = clamp(group_mean - group_sd, 0.50, 0.80)`
+- `y1 = clamp(group_mean + group_sd, 0.50, 0.80)`
+- Fill with the corresponding group colour at `15% opacity`
+
+#### Title block
+- Title: `"Weekly % HR Max by Group"`
+- Subtitle: `"Subject-level weekly mean per session · shaded band = ±1 SD"`
+
+#### Tooltip
+On point hover, show:
+- group
+- displayed week
+- mean `% HR Max` as a percentage with one decimal place
+- SD if available, also as a percentage
+- number of sessions contributing
+- number of subjects contributing
+
+Example copy:
+`Unsupervised · Wk 5`
+`Mean % HR Max: 68.5%`
+`SD: 6.5%`
+`116 sessions · 43 subjects`
+
+---
+
+### Shared legend and styling
+
+#### Legend
+Two items stacked vertically at the top-right of the chart body:
+- Blue square + `"Supervised"`
+- Orange square + `"Unsupervised"`
+
+Each marker is `10 × 10px` with `border-radius: 2px`.
+
+#### Group colours
 - Supervised → `#3378de`
 - Unsupervised → `#f5802e`
 
-#### Dots
-`r: 5px` circle at each data point, filled with group colour, no stroke.
-
 #### Grid lines
-Horizontal lines at 0%, 25%, 50%, 75%, 100%.
-Colour `#e5e5ed`. y-axis labels: `"0%"` … `"100%"` left of axis.
+- Horizontal only
+- Colour `#e5e5ed`
+- Use metric-appropriate tick positions for the active y-scale
 
-#### x-axis labels
-`"Wk 1"` … `"Wk 6"` centred on each x-position, `8px` below the axis.
+#### X-axis labels
+- `"Wk 1"` … `"Wk 6"` centred on each x-position
 
-#### Legend (top-right of card)
-Two items stacked vertically at top-right of card (`x ≈ cardRight - 80px`):
-- Blue square + `"Supervised"`
-- Orange square + `"Unsupervised"`
-Each `10×10px` marker, `border-radius: 2px`, label `12px` to the right.
+#### Missing-data behavior
+- If a group has no data for a displayed week, leave the x-position visible and break the line
+- Only render circles for points with a defined `group_mean`
+- If SD cannot be computed because only one subject contributes, omit the band for that point span
 
 ---
 
-### Panel B — Aligned Weekly Heatmaps
+## Plot 3 — Aligned Weekly Heatmaps
 
-#### Position
-Starts `36px` below the line chart x-axis baseline.
+### What it shows
+An aligned dual heatmap of weekly subject adherence across all 6 weeks, rendered as
+side-by-side Supervised and Unsupervised panels that share the same subject roster
+and row order.
+
+### Card dimensions
+- Position: `x: 60, y: 460`
+- Width: `1323px`, Height: dynamic from shared roster size
 
 #### Dimensions
-- Two heatmap panels share the lower section: **Supervised** on the left and
+- Two heatmap panels share the card body: **Supervised** on the left and
   **Unsupervised** on the right, separated by a `24px` gutter.
 - **Rows**: one per subject in the **union** of Supervised and Unsupervised
   subject IDs observed in weeks 1–6, sorted alphabetically
@@ -197,7 +334,7 @@ Starts `36px` below the line chart x-axis baseline.
 - Cell `border-radius: 2px`
 
 #### Data preparation
-1. Filter the dataset to study weeks 1–6 only.
+1. Filter the dataset to study weeks 1–6 after groupwise week normalisation
 2. For each `(group, subject, week)`, compute:
    - `total_sessions = count(*)`
    - `met_sessions = count(bounded_met == true)`
@@ -207,9 +344,9 @@ Starts `36px` below the line chart x-axis baseline.
    - **Not Met** when `total_sessions > 0` and `weekly_adherence < 0.75`
    - **No Data** when `total_sessions == 0`
 4. Build the row roster from the alphabetical union of subjects present in either
-   group during weeks 1–6.
+   group during weeks 1–6
 5. Render both group panels against that same roster so a subject always occupies
-   the same row position in both panels.
+   the same row position in both panels
 
 #### Colour encoding
 | Weekly status | Colour |
@@ -251,11 +388,13 @@ Three items horizontal, `4px` below the last heatmap row:
 ## D3 Implementation Notes
 
 - Use `d3.rollup` or `d3.group` to aggregate the CSV before drawing.
-- Both plots share the same SVG coordinate system if rendered in one `<svg>`; otherwise
-  use two separate SVGs absolutely positioned to match the card layout.
-- The SD band and line chart should use `clipPath` to prevent overflow beyond the
+- For Plot 2, compute subject-level weekly means before computing group means and SDs.
+- Plot 2 should preserve the existing inline two-button toggle interaction pattern already
+  used on other cards in the dashboard.
+- The Plot 2 SD band and line chart should use `clipPath` to prevent overflow beyond the
   chart area.
 - Recommend `d3.v7` (`import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm"`).
 - Load the CSV with `d3.csv("zone_out.csv", d3.autoType)` or equivalent typed parsing.
-- Apply the 75% threshold only to Panel B; Panel A continues to use the session-level
+- Apply the 75% threshold only to Plot 3; Plot 2 is metric-based and does not use
+  the adherence threshold.
   `bounded_met` proportion per group-week for the line chart.
