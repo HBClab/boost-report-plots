@@ -4,13 +4,14 @@ import type {
   GroupName,
   HrSessionRow,
   WeeklyGroupAdherenceSummary,
+  WeeklyGroupIntensitySummary,
   WeeklyGroupZoneSummary,
   WeeklySubjectAdherenceSummary
 } from './types.js';
 
 const GROUPS: GroupName[] = ['Supervised', 'Unsupervised'];
 const WEEKS = [1, 2, 3, 4, 5, 6];
-export const HEATMAP_ADHERENCE_THRESHOLD = 0.5;
+export const HEATMAP_ADHERENCE_THRESHOLD = 0.75;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -36,6 +37,12 @@ function parseNumber(value: string, fallback = 0): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function parseOptionalNumber(value: string | undefined): number | null {
+  if (!value || value.trim() === '' || value === 'NA' || value === 'NaN') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function parseSessionRows(records: Array<Record<string, string>>): HrSessionRow[] {
   const parsed = records
     .map((record) => ({
@@ -46,7 +53,9 @@ export function parseSessionRows(records: Array<Record<string, string>>): HrSess
       time_in_allowed_s: parseNumber(record.time_in_allowed_s),
       time_above_s: parseNumber(record.time_above_s),
       time_below_s: parseNumber(record.time_below_s),
-      bounded_met: parseBoolean(record.bounded_met)
+      bounded_met: parseBoolean(record.bounded_met),
+      edwards_trimp: parseOptionalNumber(record.edwards_trimp),
+      mean_hr_pct_max: parseOptionalNumber(record.mean_hr_pct_max)
     }))
     .filter((row) => GROUPS.includes(row.group));
 
@@ -191,6 +200,71 @@ export function buildWeeklySubjectAdherenceSummaries(
   });
 }
 
+export function buildWeeklyGroupIntensitySummaries(
+  rows: HrSessionRow[],
+  metric: 'trimp' | 'hrmax'
+): WeeklyGroupIntensitySummary[] {
+  return GROUPS.flatMap((group) =>
+    WEEKS.map((week) => {
+      const matches = rows.filter((row) => row.group === group && row.week === week);
+      const validRows = matches.filter((row) =>
+        metric === 'trimp' ? row.edwards_trimp != null : row.mean_hr_pct_max != null
+      );
+
+      if (validRows.length === 0) {
+        return {
+          group,
+          week,
+          groupMean: null,
+          groupSd: null,
+          lowerBound: null,
+          upperBound: null,
+          sessionCount: 0,
+          subjectCount: 0
+        };
+      }
+
+      const bySubject = new Map<string, number[]>();
+      for (const row of validRows) {
+        const val = (metric === 'trimp' ? row.edwards_trimp : row.mean_hr_pct_max) as number;
+        const existing = bySubject.get(row.subject);
+        if (existing) {
+          existing.push(val);
+        } else {
+          bySubject.set(row.subject, [val]);
+        }
+      }
+
+      const subjectMeans = [...bySubject.values()].map(
+        (vals) => vals.reduce((sum, v) => sum + v, 0) / vals.length
+      );
+      const groupMean = subjectMeans.reduce((sum, v) => sum + v, 0) / subjectMeans.length;
+      const groupSd = sampleSd(subjectMeans);
+
+      let lowerBound: number;
+      let upperBound: number;
+      if (metric === 'trimp') {
+        lowerBound = groupSd != null ? Math.max(0, groupMean - groupSd) : groupMean;
+        upperBound = groupSd != null ? groupMean + groupSd : groupMean;
+      } else {
+        lowerBound = groupSd != null ? clamp(groupMean - groupSd, 0.5, 0.8) : groupMean;
+        upperBound = groupSd != null ? clamp(groupMean + groupSd, 0.5, 0.8) : groupMean;
+      }
+
+      return {
+        group,
+        week,
+        groupMean,
+        groupSd,
+        lowerBound,
+        upperBound,
+        sessionCount: validRows.length,
+        subjectCount: bySubject.size
+      };
+    })
+  );
+}
+
 export function buildAlignedSubjectRoster(rows: HrSessionRow[]): AlignedSubjectRosterEntry[] {
   const subjects = new Set(rows.map((row) => row.subject));
   return [...subjects]
@@ -212,6 +286,8 @@ export function buildDashboardData(records: Array<Record<string, string>>): Dash
     zoneSummaries: buildWeeklyGroupZoneSummaries(rows),
     adherenceSummaries: buildWeeklyGroupAdherenceSummaries(rows),
     subjectSummaries: buildWeeklySubjectAdherenceSummaries(rows),
-    roster: buildAlignedSubjectRoster(rows)
+    roster: buildAlignedSubjectRoster(rows),
+    trimpSummaries: buildWeeklyGroupIntensitySummaries(rows, 'trimp'),
+    hrMaxSummaries: buildWeeklyGroupIntensitySummaries(rows, 'hrmax')
   };
 }

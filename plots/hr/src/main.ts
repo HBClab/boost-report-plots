@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 
 import { initSaveButton } from './export-svg.js';
 import { renderPlot1 } from './plot1.js';
-import { getHeatmapCardHeight, renderAdherenceTrend, renderHeatmapCard } from './plot2.js';
+import { getHeatmapCardHeight, renderIntensityTrend, renderHeatmapCard } from './plot2.js';
 import { buildDashboardData } from './transforms.js';
 import type { CardLayout } from './types.js';
 
@@ -48,9 +48,10 @@ async function loadDashboard(): Promise<void> {
     .attr('fill', '#fafafc');
 
   renderPlot1(svg, dashboardData.zoneSummaries, layout.plot1);
-  renderAdherenceTrend(
+  renderIntensityTrend(
     svg,
-    dashboardData.adherenceSummaries,
+    dashboardData.trimpSummaries,
+    dashboardData.hrMaxSummaries,
     layout.trend
   );
   renderHeatmapCard(

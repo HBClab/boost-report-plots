@@ -14,6 +14,8 @@ export interface HrSessionRow {
   time_above_s: number;
   time_below_s: number;
   bounded_met: boolean;
+  edwards_trimp: number | null;
+  mean_hr_pct_max: number | null;
 }
 
 export interface HrWeeklyGroupZoneSummary {
@@ -25,14 +27,15 @@ export interface HrWeeklyGroupZoneSummary {
   sessionCount: number;
 }
 
-export interface HrWeeklyGroupAdherenceSummary {
+export interface HrWeeklyGroupIntensitySummary {
   group: HrGroupName;
   week: number;
-  adherenceRate: number | null;
-  subjectRateSd: number | null;
+  groupMean: number | null;
+  groupSd: number | null;
   lowerBound: number | null;
   upperBound: number | null;
-  totalSessions: number;
+  sessionCount: number;
+  subjectCount: number;
 }
 
 export interface HrWeeklySubjectAdherenceSummary {
@@ -55,7 +58,8 @@ export interface HrAlignedSubjectRosterEntry {
 export interface HrDashboardData {
   rows: HrSessionRow[];
   zoneSummaries: HrWeeklyGroupZoneSummary[];
-  adherenceSummaries: HrWeeklyGroupAdherenceSummary[];
   subjectSummaries: HrWeeklySubjectAdherenceSummary[];
   roster: HrAlignedSubjectRosterEntry[];
+  trimpSummaries: HrWeeklyGroupIntensitySummary[];
+  hrMaxSummaries: HrWeeklyGroupIntensitySummary[];
 }

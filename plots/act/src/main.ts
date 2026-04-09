@@ -5,7 +5,7 @@ import { renderPlot3 } from './plot3.js';
 import { initSaveButton } from './save.js';
 import { COLORS } from './constants.js';
 import { renderHrPlot1 } from './hr-plot1.js';
-import { renderHrAdherenceTrend, renderHrHeatmapCard, getHrHeatmapCardHeight } from './hr-plot2.js';
+import { renderHrIntensityTrend, renderHrHeatmapCard, getHrHeatmapCardHeight } from './hr-plot2.js';
 import { buildHrDashboardData } from './hr-transforms.js';
 import type { Plot1ApiResponse, Plot2ApiResponse, Plot3ApiResponse, DayTypeAggregate } from './types.js';
 import type { HrDashboardData, HrHeatmapView } from './hr-types.js';
@@ -131,7 +131,7 @@ function buildZoomSpec(
         height: HR_LAYOUTS.trend.h,
         allowScroll: false,
         render: (svg) => {
-          renderHrAdherenceTrend(svg, hrData.adherenceSummaries, { x: 0, y: 0, w: HR_LAYOUTS.trend.w, h: HR_LAYOUTS.trend.h });
+          renderHrIntensityTrend(svg, hrData.trimpSummaries, hrData.hrMaxSummaries, { x: 0, y: 0, w: HR_LAYOUTS.trend.w, h: HR_LAYOUTS.trend.h });
         },
       };
     case 'hr-heatmap':
@@ -296,7 +296,7 @@ async function renderHrView(
   resizeCanvas(svg, bgRect, canvasH);
 
   renderHrPlot1(svg, data.zoneSummaries, HR_LAYOUTS.plot1);
-  renderHrAdherenceTrend(svg, data.adherenceSummaries, HR_LAYOUTS.trend);
+  renderHrIntensityTrend(svg, data.trimpSummaries, data.hrMaxSummaries, HR_LAYOUTS.trend);
 
   let hrHeatmapView: HrHeatmapView = 'adherence';
 
