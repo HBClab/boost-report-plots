@@ -3,6 +3,7 @@
 import * as d3 from 'd3';
 import type { CardLayout } from './types.js';
 import type { HrGroupName, HrWeeklyGroupZoneSummary } from './hr-types.js';
+import { renderCaption, CAPTION_H, hrCaptions } from './captions.js';
 
 // ─── Dark palette (matches ACT dashboard) ────────────────────────────────────
 const C = {
@@ -63,9 +64,11 @@ export function renderHrPlot1(
     .attr('width', layout.w).attr('height', layout.h)
     .attr('rx', 12).attr('fill', C.card);
 
+  // contentH = chart + legend zone; caption occupies the remaining CAPTION_H at the bottom.
+  const contentH = layout.h - CAPTION_H;
   const margins = { top: 62, right: 24, bottom: 80, left: 72 };
   const chartW = layout.w - margins.left - margins.right;
-  const chartH = layout.h - margins.top - margins.bottom;
+  const chartH = contentH - margins.top - margins.bottom;
 
   // Title
   card.append('text').attr('x', margins.left).attr('y', 26)
@@ -98,9 +101,9 @@ export function renderHrPlot1(
     .attr('fill', C.textSecondary).attr('font-family', C.fontMono)
     .text((v: number) => String(v));
 
-  // Y-axis label
+  // Y-axis label — centred on the chart zone (contentH), not the full card height
   card.append('text')
-    .attr('transform', `translate(16,${layout.h / 2 + 20}) rotate(-90)`)
+    .attr('transform', `translate(16,${contentH / 2 + 20}) rotate(-90)`)
     .attr('font-size', 10).attr('fill', C.textSecondary).attr('font-family', C.font)
     .attr('text-anchor', 'middle')
     .text('Seconds');
@@ -198,11 +201,17 @@ export function renderHrPlot1(
     { label: 'Supervised',   color: C.supervised },
     { label: 'Unsupervised', color: C.unsupervised },
   ];
-  const legendG = card.append('g').attr('transform', `translate(${margins.left},${layout.h - 24})`);
+  const legendG = card.append('g').attr('transform', `translate(${margins.left},${contentH - 24})`);
   legendItems.forEach((item, i) => {
     const g = legendG.append('g').attr('transform', `translate(${i * 96},0)`);
     g.append('rect').attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', item.color);
     g.append('text').attr('x', 15).attr('y', 9).attr('font-size', 11)
       .attr('fill', C.textSecondary).attr('font-family', C.font).text(item.label);
+  });
+
+  renderCaption(card, hrCaptions.plot1, {
+    captionTop: contentH + 12,
+    width: layout.w,
+    padding: 24,
   });
 }

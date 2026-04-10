@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { COLORS } from './constants.js';
 import type { SessionHourlyEnmo, CardLayout } from './types.js';
+import { renderCaption, CAPTION_H, actCaptions } from './captions.js';
 
 // ─── Session palette (docs/plot-specs/act.md v3.0) ──────────────────────────
 const SESSION_COLORS: Record<number, string> = {
@@ -63,6 +64,9 @@ export function renderPlot3(
 
   const { x, y, w, h } = layout;
 
+  // contentH is the chart+legend zone; caption occupies the remaining CAPTION_H at the bottom.
+  const contentH = h - CAPTION_H;
+
   // Card background
   const card = svg.append('g').attr('transform', `translate(${x},${y})`);
   card.attr('data-plot', '3');
@@ -79,10 +83,10 @@ export function renderPlot3(
     .attr('fill', COLORS.textPrimary)
     .text('Radial Activity Clock (ENMO by Hour)');
 
-  // Clock center relative to card origin
+  // Clock center relative to card origin — use contentH to keep clock position unchanged.
   const legendRows = _countLegendRows(rows);
   const legendH = legendRows * LEGEND_ITEM_H + LEGEND_TOP_GAP + 24;
-  const availableH = h - CARD_PAD - TITLE_H - legendH;
+  const availableH = contentH - CARD_PAD - TITLE_H - legendH;
   const cy = CARD_PAD + TITLE_H + availableH / 2;
   const cx = w / 2;
 
@@ -92,7 +96,14 @@ export function renderPlot3(
   _renderRings(clockG);
   _renderHourTicks(clockG);
   _renderLines(clockG, rows);
-  _renderLegend(card, clockG, rows, legendH, h);
+  // Pass contentH so the legend stays within the chart zone, not pushed into caption space.
+  _renderLegend(card, clockG, rows, legendH, contentH);
+
+  renderCaption(card, actCaptions.plot3, {
+    captionTop: contentH + 12,
+    width: w,
+    padding: CARD_PAD,
+  });
 }
 
 // ─── Rings & ticks ───────────────────────────────────────────────────────────

@@ -1,10 +1,12 @@
 # report-2 Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-03
+Auto-generated from all feature plans. Last updated: 2026-04-10
 
 ## Active Technologies
 - Python 3.12 (importer extension), TypeScript 5.x (server + browser) + psycopg (Python DB writes), D3 v7, Express, node-postgres (`pg`), esbuild (003-act-time-series)
 - PostgreSQL — additive new table `session_hourly_enmo`; existing `session_days` table unchanged (003-act-time-series)
+- TypeScript 5.x (browser bundle), esbuild + D3 v7 (SVG text rendering in existing plot render functions) (009-plot-captions)
+- N/A — captions are static content defined in a TypeScript source module (009-plot-captions)
 
 - Python 3.12 + psycopg, standard-library CSV/path handling (001-extract-actigraphy-data) — data importer pipeline
 - TypeScript 5.x (server + browser) + D3 v7, Express, node-postgres (`pg`), esbuild (002-act-plots-1-2) — plot rendering
@@ -39,10 +41,10 @@ pytest                                         # Python tests (if applicable)
 - TypeScript 5.x: strict mode, no `any`, D3 v7 type-safe selections
 
 ## Recent Changes
+- 009-plot-captions: Added TypeScript 5.x (browser bundle), esbuild + D3 v7 (SVG text rendering in existing plot render functions)
 - 003-act-time-series: Added Python 3.12 (importer extension), TypeScript 5.x (server + browser) + psycopg (Python DB writes), D3 v7, Express, node-postgres (`pg`), esbuild
 
 - 001-extract-actigraphy-data: Python 3.12 GGIR CSV importer, PostgreSQL schema (subjects/sessions/session_days)
-- 002-act-plots-1-2: TypeScript/D3 visualization app — Plot 1 (stacked bar) and Plot 2 (heatmap) for accelerometer data
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
