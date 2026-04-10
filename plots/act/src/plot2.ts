@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { COLORS } from './constants.js';
 import type { SubjectSessionData, CardLayout } from './types.js';
+import { renderCaption, CAPTION_H, actCaptions } from './captions.js';
 
 function ensureTooltip(): d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown> {
   let tip = d3.select<HTMLDivElement, unknown>('#d3-tooltip');
@@ -59,7 +60,8 @@ export function getPlot2Height(subjectCount: number): number {
     + LEGEND_TOP_GAP
     + LEGEND_H
     + LEGEND_LABEL_GAP
-    + CARD_BOTTOM_PAD;
+    + CARD_BOTTOM_PAD
+    + CAPTION_H;
 }
 
 // ─── Main render function ────────────────────────────────────────────────────
@@ -239,6 +241,13 @@ export function renderPlot2(
 
   renderGradientLegend(g, leftPanelX, legendTop, gradW, gradH, '#0B1320', '#5B9EF5', 'Sedentary');
   renderGradientLegend(g, rightPanelX, legendTop, gradW, gradH, '#0B1320', '#10D4E6', 'MVPA');
+
+  const contentH = layout.h - CAPTION_H;
+  renderCaption(g, actCaptions.plot2, {
+    captionTop: contentH + 12,
+    width: layout.w,
+    padding: CARD_PAD,
+  });
 }
 
 function renderGradientLegend(

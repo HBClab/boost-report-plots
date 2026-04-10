@@ -7,6 +7,7 @@ import {
   type Segment,
 } from './constants.js';
 import type { DayTypeAggregate, CardLayout } from './types.js';
+import { renderCaption, CAPTION_H, actCaptions } from './captions.js';
 
 // ─── Layout constants ────────────────────────────────────────────────────────
 const LABEL_COL_W    = 88;
@@ -276,5 +277,13 @@ export function renderPlot1(
       .attr('font-size', 12).attr('fill', COLORS.textSecondary)
       .attr('font-family', 'DM Sans, Inter, -apple-system, sans-serif')
       .text(SEGMENT_LABELS[seg]);
+  });
+
+  // Caption — uses the active session view key so it updates automatically on re-render.
+  const contentH = layout.h - CAPTION_H;
+  renderCaption(g, actCaptions.plot1[viewState.current], {
+    captionTop: contentH + 12,
+    width: layout.w,
+    padding: CARD_PAD,
   });
 }

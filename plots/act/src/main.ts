@@ -4,6 +4,7 @@ import { getPlot2Height, renderPlot2 } from './plot2.js';
 import { renderPlot3 } from './plot3.js';
 import { initSaveButton } from './save.js';
 import { COLORS } from './constants.js';
+import { CAPTION_H } from './captions.js';
 import { renderHrPlot1 } from './hr-plot1.js';
 import { renderHrIntensityTrend, renderHrHeatmapCard, getHrHeatmapCardHeight } from './hr-plot2.js';
 import { buildHrDashboardData } from './hr-transforms.js';
@@ -13,20 +14,22 @@ import type { HrDashboardData, HrHeatmapView } from './hr-types.js';
 // ─── Canvas & layout ─────────────────────────────────────────────────────────
 const CANVAS_W = 1440;
 
-// ACT layouts
+// ACT layouts — h includes CAPTION_H added to the original chart heights (560/640/640).
+// plot1 bottom = 40 + 660 = 700; plot2/plot3 start 40px below that.
 const ACT_LAYOUTS = {
-  plot1: { x: 60,  y: 40,  w: 1320, h: 560 },
-  plot2: { x: 60,  y: 640, w: 640,  h: 640 },
-  plot3: { x: 740, y: 640, w: 640,  h: 640 },
-} as const;
+  plot1: { x: 60,  y: 40,  w: 1320, h: 560 + CAPTION_H },
+  plot2: { x: 60,  y: 740, w: 640,  h: 640 },            // h comes from getPlot2Height (already includes CAPTION_H)
+  plot3: { x: 740, y: 740, w: 640,  h: 640 + CAPTION_H },
+};
 
-// HR layouts (matching original HR dashboard proportions)
+// HR layouts — h includes CAPTION_H added to the original chart heights (380/390).
+// plot1/trend bottom = 40 + 490 = 530; heatmap starts 30px below that.
 const HR_LAYOUTS = {
-  plot1: { x: 60,  y: 40,  w: 620,  h: 380 },
-  trend: { x: 723, y: 40,  w: 660,  h: 390 },
-  // heatmap h is computed from roster size at render time
-  heatmap: { x: 60, y: 460, w: 1323, h: 0 },
-} as const;
+  plot1: { x: 60,  y: 40,  w: 620,  h: 380 + CAPTION_H },
+  trend: { x: 723, y: 40,  w: 660,  h: 390 + CAPTION_H },
+  // heatmap h is computed from roster size at render time (getHrHeatmapCardHeight already includes CAPTION_H)
+  heatmap: { x: 60, y: 560, w: 1323, h: 0 },
+};
 
 // ─── Zoom modal ──────────────────────────────────────────────────────────────
 type ZoomPlotId = 'plot1' | 'plot2' | 'plot3' | 'hr-plot1' | 'hr-trend' | 'hr-heatmap';
@@ -219,7 +222,8 @@ async function renderActView(
   svg.selectAll('.zoom-btn-group').remove();
 
   const plot2Height = Math.max(ACT_LAYOUTS.plot2.h, getPlot2Height(actData.plot2Resp.subjects.length));
-  const canvasH = Math.max(1300, ACT_LAYOUTS.plot2.y + plot2Height + 40);
+  const plot3Bottom = ACT_LAYOUTS.plot3.y + ACT_LAYOUTS.plot3.h + 40;
+  const canvasH = Math.max(plot3Bottom, ACT_LAYOUTS.plot2.y + plot2Height + 40);
   resizeCanvas(svg, bgRect, canvasH);
 
   // ── Plot 1 with inline session toggle ─────────────────────────────────────

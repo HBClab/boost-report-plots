@@ -385,6 +385,49 @@ Three items horizontal, `4px` below the last heatmap row:
 
 ---
 
+## Caption Areas
+
+Each HR plot card includes a caption zone below the chart content. The caption zone is **100px tall** and sits at the bottom of the card, separated from the chart/legend by 12px of top padding.
+
+### Caption typography
+
+| Element | Font size | Weight | Color | Purpose |
+|---------|-----------|--------|-------|---------|
+| Prose description | 11px | 400 (Regular) | `#6B7A90` (text secondary) | Explains what the plot shows |
+| Numeric annotation label | 10px | 400 (Regular) | `#6B7A90` (text secondary) | Prefix label, e.g. "Supervised participants: " |
+| Numeric annotation value | 10px | 600 (Semi Bold) | `#DDE4EF` (text primary) | The number itself |
+| Disclaimer | 9px | 400 (Regular, italic) | `#6B7A90` (text secondary) | Supplementary methodology note |
+
+All caption text uses `DM Sans, Inter, -apple-system, sans-serif`.
+
+### Per-card caption content
+
+| Plot | Views | Prose | Annotations | Disclaimer |
+|------|-------|-------|-------------|------------|
+| HR Plot 1 — Zone Time | (static) | Zone-time breakdown per group per week | N per group | — |
+| HR Plot 2 — Intensity Trend | TRIMP | Edwards TRIMP by group with SD | N per group | — |
+| HR Plot 2 — Intensity Trend | % HR Max | Percent HR max by group with SD | N per group | — |
+| HR Plot 3 — Heatmaps | Adherence | Individual weekly adherence; Met/Not Met rule | — (N dynamic) | 75% threshold |
+| HR Plot 3 — Heatmaps | Sessions | Session count per participant per week | — (N dynamic) | — |
+
+### Toggle behavior
+
+For HR Plot 2, captions swap inside the existing `updateView()` function without a full card re-render. HR Plot 3 re-renders its entire card on toggle; captions update accordingly.
+
+### Card height increase
+
+Each card's SVG height is increased by `CAPTION_H = 100px`. Bottom-anchored elements (HR Plot 1 legend, HR Plot 3 heatmap body) use `contentH = layout.h − CAPTION_H` for their positioning.
+
+| Plot | Original height | Rendered height | Notes |
+|------|----------------|-----------------|-------|
+| HR Plot 1 — Zone Time | 380px | **480px** | Static increase; y-axis label and legend use `contentH` |
+| HR Plot 2 — Intensity Trend | 390px | **490px** | Static increase; `innerH` uses `contentH` so chart size unchanged |
+| HR Plot 3 — Heatmaps | dynamic | dynamic + 100px | `getHrHeatmapCardHeight()` adds `CAPTION_H` |
+
+Caption y-offset from card top: `captionTop = layout.h − CAPTION_H + 12` (12px top padding inside caption zone).
+
+---
+
 ## D3 Implementation Notes
 
 - Use `d3.rollup` or `d3.group` to aggregate the CSV before drawing.

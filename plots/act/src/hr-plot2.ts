@@ -9,6 +9,7 @@ import type {
   HrWeeklyGroupIntensitySummary,
   HrWeeklySubjectAdherenceSummary,
 } from './hr-types.js';
+import { renderCaption, CAPTION_H, hrCaptions } from './captions.js';
 
 // ─── Dark palette ─────────────────────────────────────────────────────────────
 const C = {
@@ -43,7 +44,7 @@ function ensureTooltip(): d3.Selection<HTMLDivElement, unknown, HTMLElement, unk
 // ─── Heatmap height helper (exported for canvas sizing) ─────────────────────
 export function getHrHeatmapCardHeight(rosterSize: number): number {
   const topPad = 78, botPad = 48, minCellH = 18, gap = 2, legendH = 32;
-  return topPad + rosterSize * (minCellH + gap) + legendH + botPad;
+  return topPad + rosterSize * (minCellH + gap) + legendH + botPad + CAPTION_H;
 }
 
 function adherenceColor(adherenceRatio: number | null): string {
@@ -120,9 +121,11 @@ export function renderHrIntensityTrend(
     .attr('width', layout.w).attr('height', layout.h)
     .attr('rx', 12).attr('fill', C.card);
 
+  // contentH = chart zone; caption occupies the remaining CAPTION_H at the bottom.
+  const contentH = layout.h - CAPTION_H;
   const margins = { top: 84, right: 24, bottom: 28, left: 70 };
   const innerW = layout.w - margins.left - margins.right;
-  const innerH = layout.h - margins.top - margins.bottom;
+  const innerH = contentH - margins.top - margins.bottom;
 
   const btnW = 84;
   const btnH = 24;
@@ -338,6 +341,9 @@ export function renderHrIntensityTrend(
     .attr('fill', C.textSecondary).attr('font-family', C.fontMono)
     .text((w) => `Wk ${w}`);
 
+  // Caption group — updated on every toggle via updateView.
+  const captionG = card.append('g');
+
   function updateView(view: TrendView): void {
     trimpTitleG.attr('display', view === 'trimp' ? null : 'none');
     hrMaxTitleG.attr('display', view === 'hrmax' ? null : 'none');
@@ -347,6 +353,12 @@ export function renderHrIntensityTrend(
     trimpBtnText.attr('fill', view === 'trimp' ? C.textPrimary : C.textSecondary);
     hrMaxBtnRect.attr('fill', view === 'hrmax' ? '#1A2440' : 'transparent');
     hrMaxBtnText.attr('fill', view === 'hrmax' ? C.textPrimary : C.textSecondary);
+    // Swap caption to match the active view (renderCaption clears previous content first).
+    renderCaption(captionG, hrCaptions.plot2[view], {
+      captionTop: contentH + 12,
+      width: layout.w,
+      padding: 24,
+    });
   }
 
   updateView('trimp');
@@ -371,12 +383,14 @@ export function renderHrHeatmapCard(
     .attr('width', layout.w).attr('height', layout.h)
     .attr('rx', 12).attr('fill', C.card);
 
+  // contentH = heatmap + legend zone; caption occupies the remaining CAPTION_H at the bottom.
+  const contentH = layout.h - CAPTION_H;
   const margins = { top: 72, right: 36, bottom: 56, left: 120 };
   const labelWidth = 76;
   const gutter = 40;
   const innerWidth = layout.w - margins.left - margins.right;
   const rowGap = 2;
-  const availableBodyH = layout.h - margins.top - margins.bottom - 32;
+  const availableBodyH = contentH - margins.top - margins.bottom - 32;
   const cellH = Math.max(16, Math.floor((availableBodyH - rowGap * Math.max(roster.length - 1, 0)) / Math.max(roster.length, 1)));
   const panelW = (innerWidth - labelWidth - gutter) / 2;
   const cellW = (panelW - 10) / 6;
@@ -656,4 +670,11 @@ export function renderHrHeatmapCard(
       .attr('font-size', 11).attr('fill', C.textSecondary).attr('font-family', C.font)
       .text('No Data');
   }
+
+  // Caption — view-specific text, re-rendered on each full card re-render (triggered by toggle).
+  renderCaption(card, hrCaptions.plot3[opts.view], {
+    captionTop: contentH + 12,
+    width: layout.w,
+    padding: 24,
+  });
 }

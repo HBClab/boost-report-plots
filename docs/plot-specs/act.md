@@ -208,6 +208,44 @@ Source: `session_hourly_enmo` table in PostgreSQL (see `specs/003-act-time-serie
 
 ---
 
+## Caption Areas
+
+Each plot card includes a caption zone below the chart content. The caption zone is **100px tall** and sits at the bottom of the card, separated from the chart/legend by 12px of top padding.
+
+### Caption typography
+
+| Element | Font size | Weight | Color | Purpose |
+|---------|-----------|--------|-------|---------|
+| Prose description | 11px | 400 (Regular) | `#6B7A90` (text secondary) | Explains what the plot shows and notable behaviours |
+| Numeric annotation label | 10px | 400 (Regular) | `#6B7A90` (text secondary) | Prefix label, e.g. "Intervention participants: " |
+| Numeric annotation value | 10px | 600 (Semi Bold) | `#DDE4EF` (text primary) | The number itself, e.g. "45" |
+| Disclaimer | 9px | 400 (Regular, italic) | `#6B7A90` (text secondary) | Supplementary threshold or methodology note |
+
+All caption text uses the existing card font stack: `DM Sans, Inter, -apple-system, sans-serif`.
+
+### Per-card caption content
+
+| Plot | Views | Prose | Annotations | Disclaimer |
+|------|-------|-------|-------------|------------|
+| Plot 1 — Stacked Bar | All Sessions | 24-hour composition across all sessions by day type | N per group | — |
+| Plot 1 — Stacked Bar | Baseline (S1) | Session 1 baseline composition only | N per group (S1) | — |
+| Plot 2 — Heatmap | (static) | Participant × session sedentary and MVPA layout; row sort and Δ markers | — (N dynamic) | — |
+| Plot 3 — Radial Clock | (static) | ENMO by clock hour; sleep-hours SD clamp explanation | — (N in legend) | — |
+
+### Card height increase
+
+Each card's SVG height is increased by `CAPTION_H = 100px`. The existing chart content and legend occupy the original card height (`contentH = layout.h − CAPTION_H`). Bottom-anchored legends (Plot 3) use `contentH` for their positioning to avoid overlapping the caption zone.
+
+| Plot | Original height | Rendered height | Notes |
+|------|----------------|-----------------|-------|
+| Plot 1 — Stacked Bar | 560px | **660px** | Static increase |
+| Plot 2 — Heatmap | dynamic | dynamic + 100px | `getPlot2Height()` adds `CAPTION_H` |
+| Plot 3 — Radial Clock | 640px | **740px** | Static increase; legend repositioned to `contentH` |
+
+Caption y-offset from card top: `captionTop = layout.h − CAPTION_H + 12` (12px top padding inside caption zone).
+
+---
+
 ## Version History
 
 | Version | Date | Change |
