@@ -302,7 +302,7 @@ async function renderHrView(
   renderHrPlot1(svg, data.zoneSummaries, HR_LAYOUTS.plot1);
   renderHrIntensityTrend(svg, data.trimpSummaries, data.hrMaxSummaries, HR_LAYOUTS.trend);
 
-  let hrHeatmapView: HrHeatmapView = 'adherence';
+  let hrHeatmapView: HrHeatmapView = 'sessions';
 
   function renderHrHeatmapSection(): void {
     renderHrHeatmapCard(svg, data.subjectSummaries, data.roster, hrHeatmapLayout, {
@@ -385,7 +385,7 @@ async function main(): Promise<void> {
   type DashView = 'act' | 'hr';
   let dashView: DashView = 'act';
   let currentActSessionView: SessionView = 'all';
-  let currentHrHeatmapView: HrHeatmapView = 'adherence';
+  let currentHrHeatmapView: HrHeatmapView = 'sessions';
 
   function handleOpenZoom(zoomId: ZoomPlotId): void {
     const spec = buildZoomSpec(zoomId, actData, () => currentActSessionView, () => currentHrHeatmapView, hrCache);

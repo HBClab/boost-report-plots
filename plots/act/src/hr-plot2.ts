@@ -410,8 +410,8 @@ export function renderHrHeatmapCard(
 
   // ── View toggle ──────────────────────────────────────────────────────────
   const toggleOpts: { id: HrHeatmapView; label: string }[] = [
-    { id: 'adherence', label: 'Adherence' },
     { id: 'sessions',  label: 'Sessions'  },
+    { id: 'adherence', label: 'Adherence' },
   ];
   const containerW = TOGGLE_TOTAL_W + TOGGLE_PAD * 2;
   const containerH = TOGGLE_BTN_H + TOGGLE_PAD * 2;
