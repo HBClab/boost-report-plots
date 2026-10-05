@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Activity Report — Lab {{LAB_ID_PLAIN}}</title>
+  <style>
+{{BASE_CSS}}
+    /* E — Michelle short-term stack: Activity → Sleep (WP) → Fitness text */
+    .page-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    @media print {
+      .report-card--activity .activity-panel .activity-chart img { max-height: 2.15in; object-fit: contain; }
+      .report-card--sleep .sleep-panel img { max-height: 2.35in; object-fit: contain; }
+      .report-card--fitness .fitness-box { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide1 layout-e-stack3">
+    {{HEADER}}
+    <div class="page-body">
+      {{ACTIVITY}}
+      {{SLEEP_WP}}
+      {{FITNESS}}
+    </div>
+    <p class="meta-footer">BOOST ID {{SUBJECT_ID}} · {{COHORT}} · generated {{GENERATED}} · layout e_stack3</p>
+  </section>
+</body>
+</html>

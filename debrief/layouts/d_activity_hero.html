@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Activity Report — Lab {{LAB_ID_PLAIN}}</title>
+  <style>
+{{BASE_CSS}}
+    /* D — activity hero: wide activity top, fitness + sleep bottom row */
+    .page-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 0.92fr 1.08fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+    @media print {
+      .report-card--activity .activity-panel .activity-chart img { max-height: 2.45in; object-fit: contain; }
+      .bottom-row .report-card--sleep .sleep-panel img { max-height: 2.55in; object-fit: contain; }
+      .bottom-row .report-card--fitness .fitness-box { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide1 layout-d-activity-hero">
+    {{HEADER}}
+    <div class="page-body">
+      {{ACTIVITY}}
+      <div class="bottom-row">
+        {{FITNESS}}
+        {{SLEEP}}
+      </div>
+    </div>
+    <p class="meta-footer">BOOST ID {{SUBJECT_ID}} · {{COHORT}} · generated {{GENERATED}}</p>
+  </section>
+</body>
+</html>

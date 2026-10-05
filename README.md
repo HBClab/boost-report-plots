@@ -1,5 +1,16 @@
 # Report Plot Generation
 
+## INT activity reports (debrief)
+
+Post-GGIR participant PDFs (stack D, reportlab) live in **`debrief/`**.
+
+- Docs: [`debrief/HELP.md`](debrief/HELP.md)
+- Build one: `python debrief/build_debrief.py --demo --out /tmp/debrief_demo.pdf`
+- Production cron (vosslink): `bahaa pipeline debrief --apply --land` (Tue after Monday GGIR)
+- Sync from an HBC workspace checkout: `python .cursor/tools/agent/sync_pipeline_debrief.py`
+
+Not part of the GGIR R engine (`boost-act`); this is the report step that reads part5 outputs.
+
 ## Actigraphy Importer
 
 The repository now includes a local actigraphy importer for GGIR day-summary CSVs.

@@ -1,0 +1,139 @@
+@page { size: letter portrait; margin: 0.35in; }
+* { box-sizing: border-box; }
+body {
+  font-family: Calibri, "Segoe UI", Arial, sans-serif;
+  color: #1a1a1a;
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 12px;
+  line-height: 1.32;
+}
+
+.page-header {
+  width: 100%;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.page-lab-id {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.report-card {
+  border: 1.5px solid #333;
+  border-radius: 16px;
+  padding: 10px 12px 12px;
+  background: #fff;
+}
+.report-card--fitness .fitness-section h2 {
+  font-size: 14px;
+  margin: 0 0 6px 0;
+  font-weight: 600;
+  text-align: center;
+}
+
+.chart-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  margin: 0 0 8px 0;
+  line-height: 1.25;
+}
+.chart-section-subtitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 4px 0;
+  line-height: 1.25;
+}
+.chart-section-subtitle:empty {
+  display: none;
+  margin: 0;
+}
+
+.activity-panel {
+  display: block;
+}
+.activity-panel .activity-chart img,
+.sleep-panel img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.wp-dates {
+  display: none; /* dates baked into activity chart PNG */
+}
+.wp-date {
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #222;
+}
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 14px;
+  font-size: 10px;
+  line-height: 1.2;
+  width: 100%;
+  margin-top: 6px;
+}
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.chart-legend i {
+  display: inline-block;
+  width: 13px;
+  height: 9px;
+  border: 1px solid #333;
+  font-style: normal;
+}
+.sleep-panel {
+  display: block;
+}
+.sw-sleep { background: #aec7e8; }
+.sw-sed { background: #ffbb78; }
+.sw-light { background: #98df8a; }
+.sw-mvpa { background: #ff9896; }
+
+.fitness-box { font-size: 12px; line-height: 1.35; }
+.fitness-box .label {
+  font-weight: 600;
+  display: block;
+  margin-top: 7px;
+  margin-bottom: 2px;
+  font-size: 12px;
+}
+.fitness-box .label:first-child { margin-top: 0; }
+.fitness-box p { margin: 0 0 3px 0; }
+
+.meta-footer {
+  font-size: 9px;
+  color: #777;
+  margin-top: 6px;
+}
+
+@media print {
+  html, body {
+    padding: 0;
+    margin: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .slide1 { break-after: avoid; page-break-after: avoid; }
+  .page-header {
+    break-after: avoid;
+    page-break-after: avoid;
+    margin-bottom: 8px;
+  }
+  .report-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .meta-footer { display: none; }
+}

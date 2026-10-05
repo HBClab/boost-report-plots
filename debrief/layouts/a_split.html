@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Activity Report — Lab {{LAB_ID_PLAIN}}</title>
+  <style>
+{{BASE_CSS}}
+    /* A — split: fitness left, charts stacked right (original) */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 14px;
+      align-items: stretch;
+    }
+    .col-left, .col-right { min-width: 0; }
+    .col-right {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    @media print {
+      .report-card--activity .activity-panel .activity-chart img { max-height: 2.05in; object-fit: contain; }
+      .report-card--sleep .sleep-panel img { max-height: 1.75in; object-fit: contain; }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide1 layout-a-split">
+    {{HEADER}}
+    <div class="main-grid">
+      <div class="col-left">{{FITNESS}}</div>
+      <div class="col-right">
+        {{ACTIVITY}}
+        {{SLEEP}}
+      </div>
+    </div>
+    <p class="meta-footer">BOOST ID {{SUBJECT_ID}} · {{COHORT}} · generated {{GENERATED}}</p>
+  </section>
+</body>
+</html>
