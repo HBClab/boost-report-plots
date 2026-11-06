@@ -607,8 +607,8 @@ def render_html(data: DebriefData, layout: str = DEFAULT_LAYOUT) -> str:
     return html
 
 
-def build_demo_debrief(*, lab_id: str = "1466", manual: dict | None = None) -> DebriefData:
-    """Synthetic DebriefData for layout-D visual QA (no GGIR required)."""
+def build_demo_debrief(*, lab_id: str = "EXAMPLE", manual: dict | None = None) -> DebriefData:
+    """Synthetic DebriefData for layout-D visual QA / print samples (no GGIR; not real IDs)."""
     from visual_metrics import (
         build_fitness_visual_b64,
         chart_sleep_by_weekday_wear,
@@ -649,8 +649,8 @@ def build_demo_debrief(*, lab_id: str = "1466", manual: dict | None = None) -> D
     ]
     fit_viz = build_fitness_visual_b64(manual)
     data = DebriefData(
-        subject_id="9000",
-        lab_id=lab_id,
+        subject_id="9999",
+        lab_id=lab_id or "EXAMPLE",
         cohort="int",
         wear_periods=wear_periods,
         sleep_by_dow=sleep_by_dow,
@@ -759,7 +759,7 @@ def main(argv: list[str] | None = None) -> int:
     manual.pop("avg_kcal_session", None)
 
     if args.demo:
-        lab_id = args.lab_id or "1466"
+        lab_id = args.lab_id or "EXAMPLE"
         data = build_demo_debrief(lab_id=lab_id, manual=manual or None)
         out_path = Path(args.out or args.pdf_only_out or "temp/debrief_demo_D.pdf")
         out_path.parent.mkdir(parents=True, exist_ok=True)

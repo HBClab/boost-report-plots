@@ -338,6 +338,19 @@ def render_stack_d_page1(data: "DebriefData", out_pdf: Path) -> Path:
     c.setFont("Helvetica-Bold", 13)
     c.drawCentredString(page_w / 2, y, f"Activity Report LabID: {data.lab_id}")
     y -= 14
+    # Print-sample banner when demo / fake IDs are used (Ali/Michelle handout).
+    lab_u = str(data.lab_id or "").strip().upper()
+    sid_u = str(data.subject_id or "").strip()
+    if lab_u in {"EXAMPLE", "DEMO", "SAMPLE"} or sid_u in {"9999", "0000"}:
+        c.setFont("Helvetica-Bold", 9)
+        c.setFillColorRGB(0.55, 0.05, 0.25)
+        c.drawCentredString(
+            page_w / 2,
+            y,
+            "EXAMPLE ONLY — synthetic data (not a real participant)",
+        )
+        c.setFillColorRGB(0, 0, 0)
+        y -= 12
 
     content_left = margin
     content_w = page_w - 2 * margin
