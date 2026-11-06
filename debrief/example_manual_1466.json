@@ -1,0 +1,15 @@
+{
+  "pre_vo2": 35.6,
+  "pre_vo2_date": "12/15/2025",
+  "post_vo2": 37.3,
+  "post_vo2_date": "05/18/2026",
+  "waist_pre": "97 cm",
+  "waist_post": "96.5 cm",
+  "resting_hr_pre": 76,
+  "resting_hr_post": 74,
+  "exercise_range": "02/25/2026 to 05/15/2026",
+  "sessions_completed": "58 completed sessions",
+  "adherence_pct": "97",
+  "hr_zones": "60% 102, 70% 119, 80% 135",
+  "hr_max": 169
+}

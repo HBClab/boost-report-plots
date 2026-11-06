@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Activity Report — Lab {{LAB_ID_PLAIN}}</title>
+  <style>
+    @page { size: letter portrait; margin: 0.4in; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Calibri, "Segoe UI", Arial, sans-serif;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 20px 28px;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .slide1-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      margin-bottom: 12px;
+    }
+    .lab-id { font-size: 15px; font-weight: 600; white-space: nowrap; }
+    .slide-title {
+      font-size: 17px;
+      font-weight: 600;
+      text-align: right;
+      max-width: 55%;
+      line-height: 1.25;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 28px;
+      align-items: start;
+    }
+
+    .col-left { min-width: 0; }
+
+    .col-right {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .col-right img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .activity-panel {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px 12px;
+      align-items: stretch;
+    }
+    .activity-panel .activity-chart img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .wp-dates {
+      display: grid;
+      align-content: space-evenly;
+      min-width: 112px;
+      padding: 16px 0 22px 0;
+    }
+    .wp-date {
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1.25;
+      color: #222;
+    }
+
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px 18px;
+      font-size: 11px;
+      line-height: 1.2;
+      width: 100%;
+    }
+    .chart-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .chart-legend i {
+      display: inline-block;
+      width: 14px;
+      height: 10px;
+      border: 1px solid #333;
+      font-style: normal;
+    }
+
+    .sleep-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-align: center;
+    }
+    .sleep-efficiency {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .sleep-chart-title {
+      margin: 0 0 2px 0;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+    .sleep-panel img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .sw-sleep { background: #aec7e8; }
+    .sw-sed { background: #ffbb78; }
+    .sw-light { background: #98df8a; }
+    .sw-mvpa { background: #ff9896; }
+
+    .fitness-section h2 {
+      font-size: 17px;
+      margin: 0 0 10px 0;
+      font-weight: 600;
+    }
+    .fitness-box {
+      font-size: 15px;
+      line-height: 1.45;
+    }
+    .fitness-box .label {
+      font-weight: 600;
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+    .fitness-box .label:first-child { margin-top: 0; }
+    .fitness-box p { margin: 0 0 5px 0; }
+
+    .meta-footer {
+      font-size: 10px;
+      color: #777;
+      margin-top: 8px;
+    }
+
+    @media print {
+      html, body {
+        padding: 0;
+        margin: 0;
+        font-size: 11px;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      /* Single report page — no trailing blank page */
+      .slide1 {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+      .slide1-header {
+        break-after: avoid;
+        page-break-after: avoid;
+        margin-bottom: 4px;
+      }
+      .lab-id { font-size: 13px; }
+      .slide-title { font-size: 14px; max-width: 58%; }
+      .main-grid {
+        break-before: avoid;
+        page-break-before: avoid;
+        gap: 8px 14px;
+      }
+      .fitness-section h2 { font-size: 14px; margin-bottom: 6px; }
+      .fitness-box { font-size: 12px; line-height: 1.35; }
+      .fitness-box .label { font-size: 12px; margin-top: 6px; margin-bottom: 2px; }
+      .fitness-box p { margin-bottom: 3px; }
+      .meta-footer { display: none; }
+
+      .activity-panel .activity-chart img {
+        max-height: 1.85in;
+        width: 100%;
+        object-fit: contain;
+      }
+      .wp-dates { min-width: 96px; padding: 10px 0 14px 0; }
+      .wp-date { font-size: 9px; }
+      .chart-legend { font-size: 9px; gap: 8px 12px; }
+      .sleep-efficiency,
+      .sleep-chart-title { font-size: 10px; }
+      .col-right-top .sleep-panel img {
+        max-height: 1.55in;
+        width: 100%;
+        object-fit: contain;
+      }
+
+      a { color: #1a1a1a; text-decoration: underline; }
+    }
+  </style>
+</head>
+<body>
+
+  <section class="slide1">
+    <div class="slide1-header">
+      <div class="lab-id">{{LAB_ID}}</div>
+      <div class="slide-title">Average Daily Hours of Activity and Sleep per Wear Period</div>
+    </div>
+
+    <div class="main-grid">
+      <div class="col-left">
+        <div class="fitness-section">
+          <h2>Exercise Training and Fitness</h2>
+          <div class="fitness-box">
+            <span class="label">Pre-intervention ({{PRE_VO2_DATE}})</span>
+            <p>{{PRE_VO2_LINE}}</p>
+            <p>{{WAIST_PRE_LINE}}</p>
+            <p>{{HR_PRE_LINE}}</p>
+            <span class="label">Post-intervention ({{POST_VO2_DATE}})</span>
+            <p>{{POST_VO2_LINE}}</p>
+            <p>{{WAIST_POST_LINE}}</p>
+            <p>{{HR_POST_LINE}}</p>
+            <span class="label">{{EXercise_RANGE}}</span>
+            <p>{{SESSIONS_LINE}}</p>
+            <p>{{ADHERENCE_LINE}}</p>
+            <p>{{HR_ZONES_LINE}}</p>
+            <p>{{HR_MAX_LINE}}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-right">
+        <div class="activity-panel">
+          <div class="activity-chart">
+            <img alt="Activity composition by wear period"
+                 src="data:image/png;base64,{{ACTIVITY_CHART}}">
+          </div>
+          <div class="wp-dates" style="grid-template-rows: repeat({{N_WP}}, 1fr)">{{WP_DATE_ITEMS}}</div>
+        </div>
+        <div class="chart-legend" aria-label="Activity chart color key">
+          <span><i class="sw-sleep"></i>Sleep</span>
+          <span><i class="sw-sed"></i>Sedentary</span>
+          <span><i class="sw-light"></i>Light</span>
+          <span><i class="sw-mvpa"></i>MVPA</span>
+        </div>
+        <div class="col-right-top sleep-panel">
+          <p class="sleep-efficiency">{{SLEEP_EFFICIENCY_LINE}}</p>
+          <p class="sleep-chart-title">Average Nightly Hours of Sleep per Day of Week</p>
+          <img alt="Sleep hours by day of week"
+               src="data:image/png;base64,{{SLEEP_CHART}}">
+        </div>
+      </div>
+    </div>
+
+    <p class="meta-footer">BOOST ID {{SUBJECT_ID}} · {{COHORT}} · generated {{GENERATED}}</p>
+  </section>
+
+</body>
+</html>

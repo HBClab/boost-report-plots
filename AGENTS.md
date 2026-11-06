@@ -32,4 +32,9 @@ and SQL conventions with clear module boundaries and explicit data validation.
 - 001-extract-actigraphy-data: Added Python 3.12 for ingestion tooling; SQL for local schema and migrations + Standard-library CSV/path handling, PostgreSQL driver, lightweight
 
 <!-- MANUAL ADDITIONS START -->
+## INT activity debrief PDFs
+
+Production post-GGIR reports: `debrief/` (reportlab stack D). Sync to vosslink via HBC
+`.cursor/tools/agent/sync_pipeline_debrief.py` → LSS `tools/pipeline/debrief/`.
+Not part of `boost-act` GGIR R jobs; Tuesday cron after Monday GGIR.
 <!-- MANUAL ADDITIONS END -->

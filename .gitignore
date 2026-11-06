@@ -29,3 +29,7 @@ plots/hr/public/bundle.js
 plots/hr/public/bundle.js.map
 plots/hr/dist/
 *.log
+
+# graphify generated knowledge graph (local only; do not commit)
+.graphify/
+graphify-out/

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Activity Report — Lab {{LAB_ID_PLAIN}}</title>
+  <style>
+{{BASE_CSS}}
+    /* B — stacked: compact fitness band, full-width charts */
+    .fitness-band {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 20px;
+    }
+    .fitness-band .fitness-section h2 { grid-column: 1 / -1; text-align: center; }
+    .fitness-col-sessions { border-left: 1px solid #eee; padding-left: 14px; }
+    .fitness-col-sessions .fitness-section h2 { display: none; }
+    .stacked-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    @media print {
+      .report-card--activity .activity-panel .activity-chart img { max-height: 2.35in; object-fit: contain; }
+      .report-card--sleep .sleep-panel img { max-height: 2.25in; object-fit: contain; }
+      .fitness-box { font-size: 11px; }
+      .fitness-box .label { font-size: 11px; margin-top: 5px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide1 layout-b-stacked">
+    {{HEADER}}
+    <div class="stacked-body">
+      <div class="report-card report-card--fitness">
+        <div class="fitness-band">
+          <div class="fitness-col-prepost">{{FITNESS_PREPOST}}</div>
+          <div class="fitness-col-sessions">{{FITNESS_SESSIONS}}</div>
+        </div>
+      </div>
+      {{ACTIVITY}}
+      {{SLEEP}}
+    </div>
+    <p class="meta-footer">BOOST ID {{SUBJECT_ID}} · {{COHORT}} · generated {{GENERATED}}</p>
+  </section>
+</body>
+</html>

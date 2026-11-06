@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Activity Report — Lab {{LAB_ID_PLAIN}}</title>
+  <style>
+{{BASE_CSS}}
+    /* C — dual chart: compact fitness, activity + sleep side by side */
+    .layout-c-dual-chart .page-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .layout-c-dual-chart .report-card--fitness .fitness-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 16px;
+    }
+    .layout-c-dual-chart .report-card--fitness .sessions-block { grid-column: 1 / -1; }
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .charts-row .chart-legend { margin-top: 2px; }
+    @media print {
+      .charts-row .report-card--activity .activity-panel .activity-chart img { max-height: 3.2in; object-fit: contain; }
+      .charts-row .report-card--sleep .sleep-panel img { max-height: 2.95in; object-fit: contain; }
+      .report-card--fitness .fitness-box { font-size: 10.5px; }
+      .report-card--fitness .fitness-box .label { font-size: 10.5px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide1 layout-c-dual-chart">
+    {{HEADER}}
+    <div class="page-body">
+      {{FITNESS_COMPACT}}
+      <div class="charts-row">
+        {{ACTIVITY}}
+        {{SLEEP}}
+      </div>
+    </div>
+    <p class="meta-footer">BOOST ID {{SUBJECT_ID}} · {{COHORT}} · generated {{GENERATED}}</p>
+  </section>
+</body>
+</html>
